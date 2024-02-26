@@ -21,9 +21,6 @@ class YoutubeChannels:
 
             feed = feedparser.parse(f"{self.youtube_rss_url_prefix}{channel_id}")
 
-            if channel not in videos:
-                videos[channel] = []
-
             videos[channel] = self.parse_rss_entries(feed.entries)
             self.add_durations_to_videos(videos[channel])
 
