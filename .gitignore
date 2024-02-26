@@ -1,0 +1,12 @@
+.vscode/
+cpp/build/*
+cpp/dist/*
+
+cpp/inputdata.txt
+
+nodejs/node_modules
+nodejs/mario-spritesheets
+
+notes.md
+
+feeder/feeder.db
