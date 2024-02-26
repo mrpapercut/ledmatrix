@@ -1,4 +1,5 @@
 .vscode/
+*.o
 cpp/build/*
 cpp/dist/*
 
@@ -9,4 +10,8 @@ nodejs/mario-spritesheets
 
 notes.md
 
-feeder/feeder.db
+feeder/config.json
+
+__pycache__
+
+*.db
