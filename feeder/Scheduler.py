@@ -18,8 +18,8 @@ class Scheduler(threading.Thread):
 
     def run(self):
         print(f"{ts()} Starting scheduler")
-        schedule.every(15).minutes.do(self.update_youtube_channels)
         schedule.every(1).minutes.do(self.test_scheduler)
+        schedule.every(15).minutes.do(self.update_youtube_channels)
 
         while True:
             schedule.run_pending()
