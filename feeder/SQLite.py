@@ -43,6 +43,8 @@ class SQLite:
             cursor.execute("INSERT INTO feed (timestamp, type, message) VALUES (?, ?, ?)", (timestamp, type, message))
 
             self.db.commit()
+
+            print(f"Inserted new message: {message}")
         except Exception as e:
             print(f"Error inserting feed message: {e}")
 
@@ -61,7 +63,7 @@ class SQLite:
 
                     self.insert_feed_message(video.get('published'), ':yt:newvideo:', f"New video for {channel}: {video.get('title')}")
                 except sqlite3.IntegrityError:
-                    # video already exists
+                    # video already exists in db
                     pass
 
         cursor.close()

@@ -18,8 +18,8 @@ class YoutubeChannels:
         videos = {}
 
         for channel, channel_id in self.channels.items():
-            if channel != "Grand Poo Bear":
-                continue
+            # if channel != "Grand Poo Bear":
+            #     continue
 
             feed = feedparser.parse(f"{self.youtube_rss_url_prefix}{channel_id}")
 
