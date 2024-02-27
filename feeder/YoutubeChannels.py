@@ -1,11 +1,13 @@
-from typing import List
 import feedparser
 import requests
+import time
 
 from isodate import parse_duration
 
 class YoutubeChannels:
-    def __init__(self, config) -> None:
+    def __init__(self, config, db) -> None:
+        self.db = db
+
         self.youtube_api_key = config.get("youtube").get("apikey")
         self.channels = config.get("youtube").get("channels")
 
@@ -24,7 +26,7 @@ class YoutubeChannels:
             videos[channel] = self.parse_rss_entries(feed.entries)
             self.add_durations_to_videos(videos[channel])
 
-        print(videos)
+        self.db.insert_youtube_videos(videos)
 
     def parse_rss_entries(self, entries) -> list:
         videos = []
@@ -32,10 +34,8 @@ class YoutubeChannels:
         for entry in entries:
             video_id = entry.yt_videoid
             title = entry.title
-            published = entry.published
-            updated = entry.updated
-            published_parsed = entry.published_parsed
-            updated_parsed = entry.updated_parsed
+            published = int(time.mktime(entry.published_parsed))
+            updated = int(time.mktime(entry.updated_parsed))
 
             videos.append({
                 "id": video_id,
@@ -52,7 +52,7 @@ class YoutubeChannels:
         r = requests.get(f"{self.youtube_video_details_url_prefix}{','.join(video_ids)}&key={self.youtube_api_key}")
         json_response = r.json()
 
-        durations = {response['id']: parse_duration(response['contentDetails']['duration']) for response in json_response['items']}
+        durations = {response['id']: parse_duration(response['contentDetails']['duration']).total_seconds() for response in json_response['items']}
 
         for video in videos:
             video_id = video['id']

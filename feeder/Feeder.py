@@ -1,19 +1,31 @@
 import json
-import schedule
+import time
 
+from .Scheduler import Scheduler
 from .SQLite import SQLite
-from .YoutubeChannels import YoutubeChannels
 
 class Feeder:
     def __init__(self, config):
         self.config = config
+        self.db = SQLite(self.config)
+        self.init_db()
 
-    def start_schedule(self):
-        self.schedule = SQLite(self.config)
+    def init_db(self):
+        if not self.db.connected():
+            self.db.connect()
 
-    def update_youtube_channels(self):
-        yt = YoutubeChannels(self.config)
-        yt.get_videos()
+        self.db.init_db()
+
+    def start_scheduler(self):
+        self.scheduler = Scheduler(self.config, self.db)
+        self.scheduler.start()
+
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            self.scheduler.join()
+
 
 
 if __name__ == "__main__":
@@ -22,5 +34,4 @@ if __name__ == "__main__":
         json_config = json.load(file)
 
     feeder = Feeder(json_config)
-    feeder.start_schedule()
-    feeder.update_youtube_channels()
+    feeder.start_scheduler()
