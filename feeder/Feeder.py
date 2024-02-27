@@ -2,22 +2,13 @@ import json
 import time
 
 from .Scheduler import Scheduler
-from .SQLite import SQLite
 
 class Feeder:
     def __init__(self, config):
         self.config = config
-        self.db = SQLite(self.config)
-        self.init_db()
-
-    def init_db(self):
-        if not self.db.connected():
-            self.db.connect()
-
-        self.db.init_db()
 
     def start_scheduler(self):
-        self.scheduler = Scheduler(self.config, self.db)
+        self.scheduler = Scheduler(self.config)
         self.scheduler.start()
 
         try:
@@ -25,9 +16,8 @@ class Feeder:
                 time.sleep(1)
         except KeyboardInterrupt:
             self.scheduler.stop()
+            self.scheduler.db.close()
             self.scheduler.join()
-            self.db.close()
-
 
 
 if __name__ == "__main__":

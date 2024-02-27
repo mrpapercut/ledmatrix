@@ -5,21 +5,34 @@ import time
 from datetime import datetime
 
 from .YoutubeChannels import YoutubeChannels
+from .SQLite import SQLite
 
 def ts():
     return f"[{datetime.now().strftime('%H:%M:%S')}]"
 
 class Scheduler(threading.Thread):
-    def __init__(self, config, db):
+    def __init__(self, config):
         super().__init__()
 
         self.config = config
-        self.db = db
+
+        self.db = SQLite(self.config)
 
         self.is_running = False
 
+    def init_db(self):
+        if not self.db.connected():
+            self.db.connect()
+
+        self.db.init_db()
+
     def run(self):
         print(f"{ts()} Starting scheduler")
+
+        self.init_db()
+
+        self.update_youtube_channels()
+
         self.is_running = True
 
         schedule.every(1).minutes.do(self.test_scheduler)
