@@ -24,6 +24,7 @@ class Feeder:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
+            self.scheduler.stop()
             self.scheduler.join()
             self.db.close()
 

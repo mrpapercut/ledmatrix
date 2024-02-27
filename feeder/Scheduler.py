@@ -16,14 +16,21 @@ class Scheduler(threading.Thread):
         self.config = config
         self.db = db
 
+        self.is_running = False
+
     def run(self):
         print(f"{ts()} Starting scheduler")
+        self.is_running = True
+
         schedule.every(1).minutes.do(self.test_scheduler)
         schedule.every(15).minutes.do(self.update_youtube_channels)
 
-        while True:
+        while self.is_running:
             schedule.run_pending()
             time.sleep(1)
+
+    def stop(self):
+        self.is_running = False
 
     def test_scheduler(self):
         print(f"{ts()} Scheduler is running")
