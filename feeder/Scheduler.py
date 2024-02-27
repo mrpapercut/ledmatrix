@@ -16,9 +16,7 @@ class Scheduler(threading.Thread):
         self.config = config
         self.db = db
 
-        self.start_schedule()
-
-    def start_schedule(self):
+    def run(self):
         print(f"{ts()} Starting scheduler")
         schedule.every(15).minutes.do(self.update_youtube_channels)
         schedule.every(1).minutes.do(self.test_scheduler)
