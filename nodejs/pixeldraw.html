@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pixeldraw</title>
+    <style>
+        .cell {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #ccc;
+            float: left;
+        }
+
+        .cell.selected {
+            background: #333;
+        }
+
+        .row {
+            float: left;
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper"></div>
+    <button type="button" id="getpixels">Get pixels</button>
+    <textarea id="output"></textarea>
+    <script>
+        const wrapper = document.getElementById('wrapper');
+        const getPixelsBtn = document.getElementById('getpixels');
+        const clearBtn = document.getElementById('clear');
+        const output = document.getElementById('output');
+
+        const selectedPixels = new Set();
+
+        function handleCellClick(target, x, y) {
+            target.classList.toggle('selected');
+            const id = `${x.toString().padStart(2, '0')}_${y.toString().padStart(2, '0')}`;
+
+            if (selectedPixels.has(id)) {
+                selectedPixels.delete(id);
+            } else {
+                selectedPixels.add(id);
+            }
+        }
+
+        for (let y = 0; y < 16; y++) {
+            const row = document.createElement('div');
+            row.classList.add('row');
+            for (let x = 0; x < 16; x++) {
+                const d = document.createElement('div');
+                d.classList.add('cell');
+                d.addEventListener('click', e => handleCellClick(e.target, x, y));
+                row.appendChild(d);
+            }
+            wrapper.appendChild(row);
+        }
+
+        getPixelsBtn.addEventListener('click', e => {
+            const pixelData = [];
+            const bytes = []
+
+            selectedPixels.forEach(p => {
+                const [x, y] = p.split('_').map(c => parseInt(c, 10));
+                if (!pixelData[y]) {
+                    pixelData[y] = [];
+                }
+                pixelData[y][x] = 1;
+            });
+
+            for (let y = 0; y < pixelData.length; y++) {
+                if (!pixelData[y]) pixelData[y] = [0];
+                else {
+                    for (let x = 0; x < pixelData[y].length; x++) {
+                        if (pixelData[y][x] != 1) pixelData[y][x] = 0;
+                    }
+                }
+
+                const byte = parseInt(pixelData[y].reverse().join(''), 2);
+                bytes.push(byte);
+            }
+
+            output.value = bytes.map(b => `0x${b.toString(16).padStart(2, '0')}`);
+        });
+
+        clearBtn.addEventListener('click', e => {
+            selectedPixels.forEach(p => selectedPixels.delete(p));
+            [...wrapper.querySelectorAll('.selected')].forEach(c => c.classList.remove('selected'));
+        });
+    </script>
+</body>
+</html>
