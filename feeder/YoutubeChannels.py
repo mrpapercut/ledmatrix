@@ -54,4 +54,4 @@ class YoutubeChannels:
         for video in videos:
             video_id = video['id']
             if video_id in durations:
-                video['duration'] = durations[video_id]
+                video['duration'] = int(durations[video_id])

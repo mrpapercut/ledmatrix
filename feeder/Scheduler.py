@@ -31,16 +31,17 @@ class Scheduler(threading.Thread):
 
         self.init_db()
 
-        self.update_youtube_channels()
-
         self.is_running = True
 
-        schedule.every(1).minutes.do(self.test_scheduler)
+        # schedule.every(1).minutes.do(self.test_scheduler)
         schedule.every(15).minutes.do(self.update_youtube_channels)
 
         while self.is_running:
             schedule.run_pending()
             time.sleep(1)
+
+        print(f"{ts()} Scheduler shutting down")
+        self.db.close()
 
     def stop(self):
         self.is_running = False

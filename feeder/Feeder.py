@@ -16,7 +16,6 @@ class Feeder:
                 time.sleep(1)
         except KeyboardInterrupt:
             self.scheduler.stop()
-            self.scheduler.db.close()
             self.scheduler.join()
 
 

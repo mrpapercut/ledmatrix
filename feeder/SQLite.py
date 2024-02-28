@@ -28,6 +28,7 @@ class SQLite:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS yt_videos(
                 video_id TEXT,
+                duration INTEGER,
                 UNIQUE (video_id)
             )
         """)
@@ -57,11 +58,17 @@ class SQLite:
             for video in videos:
                 try:
                     video_id = video.get('id')
-                    cursor.execute("INSERT INTO yt_videos (video_id) VALUES (?)", (video_id,))
+                    duration = video.get('duration')
+
+                    # Skip YTShorts
+                    if duration < 61:
+                        continue
+
+                    cursor.execute("INSERT INTO yt_videos (video_id, duration) VALUES (?, ?)", (video_id, duration))
 
                     self.db.commit()
 
-                    self.insert_feed_message(video.get('published'), ':yt:newvideo:', f"New video for {channel}: {video.get('title')}")
+                    self.insert_feed_message(video.get('published'), ':yt:newvideo:', f"New video for {channel}: {video.get('title')} ({duration})")
                 except sqlite3.IntegrityError:
                     # video already exists in db
                     pass
