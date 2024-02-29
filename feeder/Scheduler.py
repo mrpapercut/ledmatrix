@@ -1,17 +1,13 @@
 import schedule
 import threading
 import time
-import logging
 
-from datetime import datetime
+from .Logger import Logger
 
 from .YoutubeChannels import YoutubeChannels
 from .SQLite import SQLite
 
-logging.basicConfig(level=logging.INFO)
-
-def ts():
-    return f"[{datetime.now().strftime('%H:%M:%S')}]"
+logger = Logger().get_logger(__name__)
 
 class Scheduler(threading.Thread):
     def __init__(self, config):
@@ -30,7 +26,7 @@ class Scheduler(threading.Thread):
         self.db.init_db()
 
     def run(self):
-        logging.info(f"{ts()} Starting scheduler")
+        logger.info("Starting scheduler")
 
         self.init_db()
 
@@ -43,19 +39,19 @@ class Scheduler(threading.Thread):
             schedule.run_pending()
             time.sleep(1)
 
-        logging.info(f"{ts()} Scheduler shutting down")
+        logger.info("Scheduler shutting down")
         self.db.close()
 
     def stop(self):
         self.is_running = False
 
     def test_scheduler(self):
-        logging.info(f"{ts()} Scheduler is running")
+        logger.info("Scheduler is running")
 
     def update_youtube_channels(self):
-        logging.info(f"{ts()} Updating Youtube channels")
+        logger.info("Updating Youtube channels")
 
         yt = YoutubeChannels(self.config, self.db)
         yt.get_videos()
 
-        logging.info(f"{ts()} Finished updating Youtube channels")
+        logger.info("Finished updating Youtube channels")
