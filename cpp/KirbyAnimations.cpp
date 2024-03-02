@@ -1,3 +1,4 @@
+#include "Spritesheet.hpp"
 #include "spritesheets.hpp"
 #include "SpriteAnimations.hpp"
 
@@ -11,10 +12,9 @@ namespace Sprites
     public:
         Spritesheet spriteData;
 
-        KirbyWalking(Canvas *canvas, volatile bool &interrupt_flag) : SpriteAnimations(canvas, interrupt_flag)
-        {
-            spriteData = Spritesheets::KirbyWalking;
-        }
+        KirbyWalking(Canvas *canvas, volatile bool &interrupt_flag)
+            : SpriteAnimations(canvas, interrupt_flag), spriteData((Spritesheets::KirbyWalking)) {}
+
         void Run() override
         {
             int fps = 10;
@@ -27,10 +27,9 @@ namespace Sprites
     public:
         Spritesheet spriteData;
 
-        KirbyTumbling(Canvas *canvas, volatile bool &interrupt_flag) : SpriteAnimations(canvas, interrupt_flag)
-        {
-            spriteData = Spritesheets::KirbyTumbling;
-        }
+        KirbyTumbling(Canvas *canvas, volatile bool &interrupt_flag)
+            : SpriteAnimations(canvas, interrupt_flag), spriteData((Spritesheets::KirbyTumbling)) {}
+
         void Run() override
         {
             int fps = 15;
@@ -43,10 +42,9 @@ namespace Sprites
     public:
         Spritesheet spriteData;
 
-        KirbyRunning(Canvas *canvas, volatile bool &interrupt_flag) : SpriteAnimations(canvas, interrupt_flag)
-        {
-            spriteData = Spritesheets::KirbyRunning;
-        }
+        KirbyRunning(Canvas *canvas, volatile bool &interrupt_flag)
+            : SpriteAnimations(canvas, interrupt_flag), spriteData((Spritesheets::KirbyRunning)) {}
+
         void Run() override
         {
             ShowAnimatedSpritesheet(spriteData);

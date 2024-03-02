@@ -4,7 +4,7 @@ CXXFLAGS = $(CFLAGS)
 BUILD_DIR := build
 DIST_DIR := dist
 
-OBJECTS := $(addprefix $(BUILD_DIR)/, spritesheets.o fonts.o LedMatrix.o)
+OBJECTS := $(addprefix $(BUILD_DIR)/, spritesheets.o fonts.o Spritesheet.o Text.o SpriteAnimations.o LedMatrix.o)
 BINARIES := $(addprefix $(DIST_DIR)/, LedMatrix)
 
 RGB_LIB_DISTRIBUTION = ..

@@ -1,7 +1,5 @@
 #include "led-matrix.h"
 
-#include <iostream>
-#include <fstream>
 #include <vector>
 #include <bitset>
 
@@ -14,6 +12,7 @@
 
 #include "fonts.hpp"
 #include "Text.hpp"
+#include "Spritesheet.hpp"
 #include "spritesheets.hpp"
 
 namespace Text
@@ -22,6 +21,22 @@ namespace Text
 
     void Text::ScrollText(Font font, const char *message)
     {
+        std::vector<std::vector<int>> characterData = {};
+
+        for (int i = 0; message[i] != '\0'; ++i)
+        {
+            char currentChar = message[i];
+
+            if (font.characters.count(currentChar) > 0)
+            {
+                characterData.push_back(font.characters[currentChar]);
+            }
+        }
+
+        Spritesheet spritesheet = Spritesheet::ConvertFontToPixels(characterData);
+
+        std::vector<int> colors = spritesheet.colors;
+
         int fps = 12;
 
         int offsetX = -24;
@@ -54,7 +69,7 @@ namespace Text
             }
         }
 
-        Spritesheet spritesheet = ConvertFontToPixels(characterData);
+        Spritesheet spritesheet = Spritesheet::ConvertFontToPixels(characterData);
 
         std::vector<int> colors = spritesheet.colors;
 
@@ -79,7 +94,6 @@ namespace Text
                 {
                     for (size_t x = 0; x < currentCharacter[y].size(); ++x) // Pixel
                     {
-
                         int colorIndex = currentCharacter[y][x];
                         if (colorIndex == 0)
                             continue;
@@ -113,85 +127,4 @@ namespace Text
             usleep((1000 / fps) * 1000);
         }
     }
-
-    Spritesheet Text::ConvertFontToPixels(std::vector<std::vector<int>> fontData)
-    {
-        Spritesheet textPixels = {0, 0, 1, {0x0, 0x44aa00}, {}};
-
-        // int maxWidth = 0;
-
-        for (size_t i = 0; i < fontData.size(); ++i) // Per letter
-        {
-            std::vector<std::vector<int>> characterPixels = {};
-
-            for (size_t j = 0; j < fontData[i].size(); ++j) // Per row in letter
-            {
-                std::string binaryString = std::bitset<sizeof(int) * 8>(fontData[i][j]).to_string();
-                std::string reversedString = std::string(binaryString.rbegin(), binaryString.rend());
-
-                reversedString.erase(reversedString.find_last_of('1') + 1);
-
-                std::vector<int> booleanList;
-                for (char bit : reversedString) // Per pixel
-                {
-                    booleanList.push_back(bit == '1' ? 1 : 0);
-                }
-
-                characterPixels.push_back(booleanList);
-            }
-
-            textPixels.pixelData.push_back(characterPixels);
-        }
-
-        return textPixels;
-    }
-
-    class ShowHelloWorld : public Text
-    {
-    public:
-        Font font = Fonts::DefaultFont;
-
-        ShowHelloWorld(Canvas *canvas, volatile bool &interrupt_flag) : Text(canvas, interrupt_flag) {}
-
-        void Run() override
-        {
-            const char *message = "Hello, world!";
-            ShowText(font, message);
-        }
-    };
-
-    class ShowRandomLineFromFile : public Text
-    {
-    public:
-        Font font = Fonts::DefaultFont;
-
-        ShowRandomLineFromFile(Canvas *canvas, volatile bool &interrupt_flag) : Text(canvas, interrupt_flag) {}
-
-        void Run() override
-        {
-            std::string message = ReadLineFromFile();
-
-            ShowText(font, message.c_str());
-        }
-
-    private:
-        std::string ReadLineFromFile()
-        {
-            std::ifstream file("inputdata.txt");
-
-            if (!file.is_open())
-            {
-                std::perror("Unable to open inputdata.txt.");
-
-                return "";
-            }
-
-            std::string firstline;
-            std::getline(file, firstline);
-
-            file.close();
-
-            return firstline;
-        }
-    };
 }

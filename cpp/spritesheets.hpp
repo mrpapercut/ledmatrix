@@ -3,14 +3,7 @@
 #include <vector>
 #include <string>
 
-struct Spritesheet
-{
-    int width;
-    int height;
-    int numSheets;
-    std::vector<int> colors;
-    std::vector<std::vector<std::vector<int>>> pixelData;
-};
+#include "Spritesheet.hpp"
 
 namespace Spritesheets
 {

@@ -2,15 +2,16 @@
 
 #include <unistd.h>
 #include <math.h>
-#include <stdio.h>
+#include <memory>
 #include <signal.h>
+#include <stdio.h>
 
 #include "constants.h"
 
-#include "SpriteAnimations.cpp"
-#include "KirbyAnimations.cpp"
+#include "spritesheets.hpp"
+#include "SpriteAnimations.hpp"
 
-#include "Text.cpp"
+#include "Text.hpp"
 
 using rgb_matrix::Canvas;
 using rgb_matrix::RGBMatrix;
@@ -94,25 +95,25 @@ int main(int argc, char *argv[])
     signal(SIGTERM, InterruptHandler);
     signal(SIGINT, InterruptHandler);
 
-    Sprites::SpriteAnimations *animation = NULL;
-    Text::Text *textdisplay = NULL;
+    std::unique_ptr<Sprites::SpriteAnimations> animation = NULL;
+    std::unique_ptr<Text::Text> textdisplay = NULL;
 
     switch (type)
     {
     case 0:
-        animation = new Sprites::KirbyWalking(canvas, interrupt_received);
+        animation = std::make_unique<Sprites::KirbyWalking>(canvas, interrupt_received);
         break;
     case 1:
-        animation = new Sprites::KirbyTumbling(canvas, interrupt_received);
+        animation = std::make_unique<Sprites::KirbyTumbling>(canvas, interrupt_received);
         break;
     case 2:
-        animation = new Sprites::KirbyRunning(canvas, interrupt_received);
+        animation = std::make_unique<Sprites::KirbyRunning>(canvas, interrupt_received);
         break;
     case 3:
-        textdisplay = new Text::ShowHelloWorld(canvas, interrupt_received);
+        textdisplay = std::make_unique<Text::ShowHelloWorld>(canvas, interrupt_received);
         break;
     case 4:
-        textdisplay = new Text::ShowRandomLineFromFile(canvas, interrupt_received);
+        textdisplay = std::make_unique<Text::ShowRandomLineFromFile>(canvas, interrupt_received);
         break;
     default:
         return usage(argv[0]);
@@ -130,7 +131,6 @@ int main(int argc, char *argv[])
     // Animation finished. Shut down the RGB matrix.
     canvas->Clear();
     delete canvas;
-    delete animation;
 
     return 0;
 }
