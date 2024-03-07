@@ -33,10 +33,9 @@ class Scheduler(threading.Thread):
 
         self.is_running = True
 
-        self.update_youtube_channels()
-
         schedule.every(1).minutes.do(self.test_scheduler)
         schedule.every(15).minutes.do(self.update_youtube_channels)
+        schedule.every(1).hours.do(self.update_current_weather)
 
         while self.is_running:
             schedule.run_pending()
