@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 class SQLite:
     def __init__(self, config) -> None:
@@ -22,7 +23,8 @@ class SQLite:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
                 type TEXT NOT NULL,
-                message TEXT NOT NULL
+                message TEXT NOT NULL,
+                param TEXT NOT NULL
             )
         """)
         cursor.execute("""
@@ -37,11 +39,11 @@ class SQLite:
 
         cursor.close()
 
-    def insert_feed_message(self, timestamp, type, message):
+    def insert_feed_message(self, timestamp, type, message, extraParam):
         cursor = self.db.cursor()
 
         try:
-            cursor.execute("INSERT INTO feed (timestamp, type, message) VALUES (?, ?, ?)", (timestamp, type, message))
+            cursor.execute("INSERT INTO feed (timestamp, type, message, param) VALUES (?, ?, ?, ?)", (timestamp, type, message, extraParam))
 
             self.db.commit()
 
@@ -68,9 +70,18 @@ class SQLite:
 
                     self.db.commit()
 
-                    self.insert_feed_message(video.get('published'), ':yt:newvideo:', f"New video for {channel}: {video.get('title')} ({duration})")
+                    self.insert_feed_message(video.get('published'), ':yt:newvideo:', f"New video for {channel}: {video.get('title')} ({duration})", channel)
                 except sqlite3.IntegrityError:
                     # video already exists in db
                     pass
+
+        cursor.close()
+
+    def insert_current_weather(self, weather):
+        cursor = self.db.cursor()
+
+        message = f"Temperature: {weather.get('temperature')} - real feel: {weather.get('real_feel_temperature')} - precipitation: {weather.get('precipitation')}"
+
+        self.insert_feed_message(weather.get('timestamp'), ':weather:current_conditions:', message, "")
 
         cursor.close()

@@ -4,8 +4,9 @@ import time
 
 from .Logger import Logger
 
-from .YoutubeChannels import YoutubeChannels
 from .SQLite import SQLite
+from .Weather import Weather
+from .YoutubeChannels import YoutubeChannels
 
 class Scheduler(threading.Thread):
     def __init__(self, config):
@@ -32,6 +33,8 @@ class Scheduler(threading.Thread):
 
         self.is_running = True
 
+        self.update_youtube_channels()
+
         schedule.every(1).minutes.do(self.test_scheduler)
         schedule.every(15).minutes.do(self.update_youtube_channels)
 
@@ -55,3 +58,11 @@ class Scheduler(threading.Thread):
         yt.get_videos()
 
         self.logger.info("Finished updating Youtube channels")
+
+    def update_current_weather(self):
+        self.logger.info("Updating current weather")
+
+        weather = Weather(self.config, self.db)
+        weather.get_current_conditions()
+
+        self.logger.info("Finished updating current weather")

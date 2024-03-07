@@ -1,0 +1,18 @@
+{
+    "log": {
+        "level": "info",
+        "log_to_file": false,
+        "filename": "./feeder.log"
+    },
+    "db": {
+        "filename": "./feeder.db"
+    },
+    "youtube": {
+        "apikey": "",
+        "channels": {}
+    },
+    "weather": {
+        "apikey": "",
+        "location": 0
+    }
+}
