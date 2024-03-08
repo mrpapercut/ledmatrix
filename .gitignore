@@ -1,5 +1,5 @@
 .vscode/
-*.o
+**/*.o
 cpp/build/*
 cpp/dist/*
 
