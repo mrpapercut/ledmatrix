@@ -174,7 +174,7 @@ $(TARGET).a : $(OBJECTS)
 	$(AR) rcs $@ $^
 
 $(TARGET).so.1 : $(OBJECTS)
-	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lpthread
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lstdc++
 
 led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
