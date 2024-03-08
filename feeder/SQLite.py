@@ -24,7 +24,9 @@ class SQLite:
                 timestamp TEXT NOT NULL,
                 type TEXT NOT NULL,
                 message TEXT NOT NULL,
-                param TEXT NOT NULL
+                param TEXT NOT NULL,
+                priority INTEGER,
+                display_times INTEGER,
             )
         """)
         cursor.execute("""
@@ -39,11 +41,13 @@ class SQLite:
 
         cursor.close()
 
-    def insert_feed_message(self, timestamp, type, message, extraParam):
+    def insert_feed_message(self, timestamp, type, message, extraParam, priority = 10, displayTimes = 1):
         cursor = self.db.cursor()
 
+        insert_query = "INSERT INTO feed (timestamp, type, message, param, priority, display_times) VALUES (?, ?, ?, ?, ?, ?)"
+
         try:
-            cursor.execute("INSERT INTO feed (timestamp, type, message, param) VALUES (?, ?, ?, ?)", (timestamp, type, message, extraParam))
+            cursor.execute(insert_query, (timestamp, type, message, extraParam, priority, displayTimes))
 
             self.db.commit()
 
