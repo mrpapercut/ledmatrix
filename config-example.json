@@ -4,6 +4,12 @@
         "log_to_file": false,
         "filename": "./feeder.log"
     },
+    "canvas": {
+        "screen_width": 64,
+        "screen_height": 32,
+        "brightness": 30,
+        "text_color": 65280
+    },
     "db": {
         "filename": "./feeder.db"
     },
