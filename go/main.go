@@ -1,30 +1,45 @@
 package main
 
-/*
-#cgo LDFLAGS: -L. -lrgbmatrix -lstdc++ -lm
-#include "../include/led-matrix-c.h"
-#include <stdlib.h>
-*/
-import "C"
 import (
-	"unsafe"
+	"fmt"
+	"os"
+	"os/signal"
+	"sync"
 )
 
+var (
+	cleanupOnce sync.Once
+)
+
+func createCleanupFunc(canvas *Canvas) func() {
+	return func() {
+		fmt.Println("\nCTRL+C signal received, cleaning up...")
+		canvas.Close()
+	}
+}
+
 func main() {
-	var options C.struct_RGBLedMatrixOptions
-	options.hardware_mapping = C.CString("regular")
-	options.cols = 64
-	options.rows = 32
-	options.brightness = 50
-	options.disable_hardware_pulsing = true
+	canvas := getCanvasInstance()
 
-	matrix := C.led_matrix_create_from_options(&options, nil, nil)
-	canvas := C.led_matrix_get_canvas(matrix)
+	// Prepare for cleanup
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt)
 
-	C.led_canvas_set_pixel(canvas, 0, 0, 0xff, 0xff, 0xff)
+	go func() {
+		for {
+			select {
+			case <- signalChannel:
+				cleanupOnce.Do(createCleanupFunc(canvas))
+				os.Exit(0)
+			}
+		}
+	}()
 
-	// Don't forget to free the C string
-	C.free(unsafe.Pointer(options.hardware_mapping))
+	spritesheet, err := getSpritesheetFromJson("./sprites/kirbyWalking.json")
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	C.led_matrix_delete(matrix)
+	drawOptions := DrawOptions{Reverse: true}
+	spritesheet.Draw(drawOptions)
 }
