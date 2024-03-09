@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"os"
 	"sync"
 )
@@ -60,7 +60,7 @@ func (c *Config) init() {
 		return
 	}
 
-	jsonData, err := io.ReadAll(file)
+	jsonData, err := ioutil.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error reading config file:", err)
 		return
