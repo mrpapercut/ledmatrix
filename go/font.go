@@ -8,7 +8,7 @@ import (
 )
 
 type Font struct {
-	name string	`json:"name"`
+	name       string           `json:"name"`
 	characters map[string][]int `json:"characters"`
 }
 
@@ -40,7 +40,7 @@ func getFontFromJson(filename string) (*Font, error) {
 
 func (f *Font) ConvertTextToSpritesheet(text string) *Spritesheet {
 	spritesheet := &Spritesheet{
-		Width: 0,
+		Width:  0,
 		Height: 0,
 	}
 

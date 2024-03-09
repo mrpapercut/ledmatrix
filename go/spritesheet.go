@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 )
@@ -13,17 +13,17 @@ type FontData [][]int
 
 type DrawOptions struct {
 	Reverse bool
-	Loop bool
-	Scroll bool
+	Loop    bool
+	Scroll  bool
 }
 
 type Spritesheet struct {
-	Width int `json:"width"`
-	Height int `json:"height"`
-	NumSheets int `json:"num_sheets"`
-	FPS int `json:"fps"`
-	Animation []int `json:"animation"`
-	Colors []int `json:"colors"`
+	Width     int       `json:"width"`
+	Height    int       `json:"height"`
+	NumSheets int       `json:"num_sheets"`
+	FPS       int       `json:"fps"`
+	Animation []int     `json:"animation"`
+	Colors    []int     `json:"colors"`
 	PixelData PixelData `json:"pixeldata"`
 }
 
@@ -36,7 +36,7 @@ func getSpritesheetFromJson(filename string) (*Spritesheet, error) {
 		return nil, err
 	}
 
-	jsonData, err := ioutil.ReadAll(file)
+	jsonData, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error reading config file:", err)
 		return nil, err
@@ -56,8 +56,8 @@ func getSpritesheetFromJson(filename string) (*Spritesheet, error) {
 func (s *Spritesheet) reverseSheet(sheet [][]int) [][]int {
 	for _, row := range sheet {
 		length := len(row)
-		for i := 0; i < length / 2; i++ {
-			row[i], row[length - i - 1] = row[length - i - 1], row[i]
+		for i := 0; i < length/2; i++ {
+			row[i], row[length-i-1] = row[length-i-1], row[i]
 		}
 	}
 
@@ -69,7 +69,7 @@ func (s *Spritesheet) Draw(drawOptions DrawOptions) {
 	canvas := getCanvasInstance()
 
 	fps := s.FPS
-	frameDuration := time.Duration(int(1000 / fps)) * time.Millisecond
+	frameDuration := time.Duration(int(1000/fps)) * time.Millisecond
 
 	animationFrames := s.Animation
 	animationIndex := 0
