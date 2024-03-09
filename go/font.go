@@ -8,8 +8,8 @@ import (
 )
 
 type Font struct {
-	name       string           `json:"name"`
-	characters map[string][]int `json:"characters"`
+	Name       string         `json:"name"`
+	Characters map[rune][]int `json:"characters"`
 }
 
 func getFontFromJson(filename string) (*Font, error) {
@@ -39,10 +39,29 @@ func getFontFromJson(filename string) (*Font, error) {
 }
 
 func (f *Font) ConvertTextToSpritesheet(text string) *Spritesheet {
+	config := getConfig()
+
 	spritesheet := &Spritesheet{
-		Width:  0,
-		Height: 0,
+		Width:     0,
+		Height:    0,
+		NumSheets: 1,
+		FPS:       1,
+		Animation: []int{1},
+		Colors:    []int{0, config.Canvas.TextColor},
+		PixelData: PixelData{},
 	}
+
+	// Convert text to font-characters
+	characters := make([][]int, len(text))
+	for _, char := range text {
+		if f.Characters[char] != nil {
+			characters = append(characters, f.Characters[char])
+		}
+	}
+
+	fmt.Println(characters)
+
+	// Convert font-characters to single sheet
 
 	return spritesheet
 }
