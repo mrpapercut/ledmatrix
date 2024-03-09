@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type Font struct {
-	Name       string         `json:"name"`
-	Characters map[rune][]int `json:"characters"`
+	Name       string           `json:"name"`
+	Characters map[string][]int `json:"characters"`
 }
 
 func getFontFromJson(filename string) (*Font, error) {
@@ -48,20 +50,67 @@ func (f *Font) ConvertTextToSpritesheet(text string) *Spritesheet {
 		FPS:       1,
 		Animation: []int{1},
 		Colors:    []int{0, config.Canvas.TextColor},
-		PixelData: PixelData{},
 	}
 
 	// Convert text to font-characters
-	characters := make([][]int, len(text))
+	characters := make([][]int, 0, len(text))
 	for _, char := range text {
-		if f.Characters[char] != nil {
-			characters = append(characters, f.Characters[char])
+		fontChar := f.Characters[string(char)]
+
+		if fontChar != nil {
+			characters = append(characters, fontChar)
 		}
 	}
 
-	fmt.Println(characters)
+	// Convert font-characters to sheets
+	sheetsPixelData := PixelData{}
+	for i := 0; i < len(characters); i++ {
+		characterPixels := make([][]int, 0)
 
-	// Convert font-characters to single sheet
+		for j := 0; j < len(characters[i]); j++ {
+			// Convert to binary string
+			binaryString := strconv.FormatInt(int64(characters[i][j]), 2)
+
+			// Reverse the binary string
+			reversedString := reverseBinaryString(binaryString)
+
+			// Remove trailing zeros
+			reversedString = strings.TrimRight(reversedString, "0")
+
+			boolList := make([]int, 0)
+			for _, c := range reversedString {
+				if c == '1' {
+					boolList = append(boolList, 1)
+				} else {
+					boolList = append(boolList, 0)
+				}
+			}
+
+			characterPixels = append(characterPixels, boolList)
+		}
+
+		sheetsPixelData = append(sheetsPixelData, characterPixels)
+	}
+
+	// Convert character-sheets to single sheet
+	singleSheetPixelData := PixelData{}
+	offsetX := 0
+	// y := 0
+	for y := 0; y < len(sheetsPixelData); y++ {
+		if singleSheetPixelData[y] == nil {
+			singleSheetPixelData[y] = make([][]int, 0)
+		}
+
+		for x := 0; x < len(sheetsPixelData[y]); x++ {
+			singleSheetPixelData[y][x + offsetX] = sheetsPixelData[y][x]
+		}
+
+		width, _ := getSheetWidthHeight(sheetsPixelData[y])
+
+		offsetX = offsetX + width + 2
+	}
+
+	spritesheet.PixelData = singleSheetPixelData
 
 	return spritesheet
 }

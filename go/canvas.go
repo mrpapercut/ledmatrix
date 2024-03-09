@@ -17,6 +17,7 @@ type Canvas struct {
 	matrix *C.struct_RGBLedMatrix
 	canvas *C.struct_LedCanvas
 	options C.struct_RGBLedMatrixOptions
+	config *Config
 }
 
 var canvasInstance *Canvas
@@ -36,16 +37,16 @@ func getCanvasInstance() *Canvas {
 }
 
 func (c *Canvas) SetDefaultOptions() {
-	config := getConfig()
-
 	c.options.hardware_mapping = C.CString("regular")
-	c.options.cols = C.int(config.Canvas.ScreenWidth)
-	c.options.rows = C.int(config.Canvas.ScreenHeight)
-	c.options.brightness = C.int(config.Canvas.Brightness)
+	c.options.cols = C.int(c.config.Canvas.ScreenWidth)
+	c.options.rows = C.int(c.config.Canvas.ScreenHeight)
+	c.options.brightness = C.int(c.config.Canvas.Brightness)
 	c.options.disable_hardware_pulsing = true
 }
 
 func (c *Canvas) init() {
+	c.config = getConfig()
+
 	c.SetDefaultOptions()
 
 	c.matrix = C.led_matrix_create_from_options(&c.options, nil, nil)
@@ -75,6 +76,10 @@ func (c *Canvas) Close() {
 func (c *Canvas) DrawScreen(pixeldata [][]int, colors []int, offsetX int, offsetY int) {
 	for y := 0; y < len(pixeldata); y++ {
 		for x := 0; x < len(pixeldata[y]); x++ {
+			if x + offsetX < 0 || x + offsetX > c.config.Canvas.ScreenWidth || y + offsetY < 0 || y + offsetY > c.config.Canvas.ScreenHeight {
+				continue
+			}
+
 			colorIndex := pixeldata[y][x]
 			if colorIndex == -1 {
 				continue

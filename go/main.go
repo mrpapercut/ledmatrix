@@ -35,11 +35,19 @@ func main() {
 		}
 	}()
 
+	font, err := getFontFromJson("./fonts/default.json")
+	if err != nil {
+		fmt.Println("Error reading font: ", err)
+	}
+
+	textsprite := font.ConvertTextToSpritesheet("Hello, world!")
+
+	fmt.Println("\n\n", textsprite)
+
 	spritesheet, err := getSpritesheetFromJson("./sprites/kirbyWalking.json")
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	drawOptions := DrawOptions{Reverse: true}
 	spritesheet.Draw(drawOptions)
 }
