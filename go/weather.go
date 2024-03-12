@@ -58,14 +58,13 @@ type FiveDayForecast struct {
 	DailyForecasts []DailyForecast `json:"DailyForecasts"`
 }
 
-var weatherLock = &sync.Mutex{}
-
 type Weather struct {
 	ApiKey         string
 	Location       int
 	EndpointPrefix string
 }
 
+var weatherLock = &sync.Mutex{}
 var weatherInstance *Weather
 
 func getWeatherInstance() *Weather {
@@ -125,4 +124,59 @@ func (w *Weather) Get5DayForecast() {
 	}
 
 	fmt.Println(fiveDayForecast)
+}
+
+func (w *Weather) GetIcon(icon int) string {
+	icons := map[int]string{
+		1:  "sun",
+		2:  "sun",
+		3:  "sun",
+		4:  "cloudy",
+		5:  "cloudy",
+		6:  "cloudy",
+		7:  "clouds",
+		8:  "clouds",
+		9:  "",
+		10: "",
+		11: "clouds",
+		12: "rain",
+		13: "rain",
+		14: "rain",
+		15: "lightning",
+		16: "lightning",
+		17: "lightning",
+		18: "rain",
+		19: "snow",
+		20: "snow",
+		21: "snow",
+		22: "snow",
+		23: "snow",
+		24: "snow",
+		25: "snow",
+		26: "rain",
+		27: "",
+		28: "",
+		29: "snow",
+		30: "thermometer_high",
+		31: "thermometer_low",
+		32: "windy",
+		33: "moon",
+		34: "moon",
+		35: "moon",
+		36: "clouds",
+		37: "clouds",
+		38: "clouds",
+		39: "rain",
+		40: "rain",
+		41: "lightning",
+		42: "lightning",
+		43: "snow",
+		44: "snow",
+	}
+
+	if iconName, ok := icons[icon]; ok {
+		return iconName
+	}
+
+	return ""
 }
