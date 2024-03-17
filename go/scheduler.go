@@ -66,16 +66,6 @@ func (s *Scheduler) Start() {
 			}
 		}
 	}()
-
-	spritesheet, _ := getSpritesheetFromJson("./sprites/marioSMWWalk.json")
-
-	animationDrawOptions := DrawOptions{
-		ScrollSpeed: 3,
-		SpriteType: AnimationSprite,
-		Reverse: true,
-	}
-
-	spritesheet.Draw(animationDrawOptions)
 }
 
 func (s *Scheduler) Stop() {
