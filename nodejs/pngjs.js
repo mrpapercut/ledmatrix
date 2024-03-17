@@ -3,14 +3,16 @@ const path = require('path');
 
 const { PNG } = require('pngjs');
 
-const dirname = './mario-spritesheets/individual/kirby/run/';
+const dirname = './mario-spritesheets/individual/mario-smw-walk/';
 
 const results = {
     width: 0,
     height: 0,
-    numSheets: 0,
+    num_sheets: 0,
+    fps: 12,
+    animation: [],
     colors: [],
-    pixelData: []
+    pixeldata: []
 }
 
 fs.readdir(dirname, (err, files) => {
@@ -27,7 +29,7 @@ fs.readdir(dirname, (err, files) => {
 
         if (png.width > results.width) results.width = png.width;
         if (png.height > results.height) results.height = png.height;
-        results.numSheets++;
+        results.num_sheets++;
 
         for (let y = 0; y < png.height; y++) {
             sheetPixels[y] = [];
@@ -48,10 +50,12 @@ fs.readdir(dirname, (err, files) => {
             }
         }
 
-        results.pixelData.push(sheetPixels);
-    })
+        results.pixeldata.push(sheetPixels);
+    });
 
-    console.log(convertObjToCPP(results));
+    results.animation = new Array(results.pixeldata.length).fill().map((_, i) => i);
+
+    console.log(JSON.stringify(results));
 });
 
 function convertObjToCPP(spritesheet) {
