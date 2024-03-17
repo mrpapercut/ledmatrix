@@ -11,6 +11,7 @@ import (
 var configLock = &sync.Mutex{}
 
 type Config struct {
+	Debug bool `json:"debug"`
 	Log struct {
 		Level     string `json:"level"`
 		LogToFile bool   `json:"log_to_file"`
@@ -25,6 +26,10 @@ type Config struct {
 	Database struct {
 		Filename string `json:"filename"`
 	} `json:"db"`
+	WorkingHours struct {
+		Start int `json:"start"`
+		End int `json:"end"`
+	} `json:"working_hours"`
 	Youtube struct {
 		ApiKey   string            `json:"apikey"`
 		Channels map[string]string `json:"channels"`
@@ -70,5 +75,9 @@ func (c *Config) init() {
 	if err != nil {
 		fmt.Println("Error parsing config file:", err)
 		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "debug" {
+		c.Debug = true
 	}
 }

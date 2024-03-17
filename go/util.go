@@ -1,5 +1,9 @@
 package main
 
+import (
+	"time"
+)
+
 func convertColorToRGB(color int) (int, int, int) {
 	r := (color >> 16) & 0xff
 	g := (color >> 8) & 0xff
@@ -28,4 +32,23 @@ func getSheetWidthHeight(sheet [][]int) (int, int) {
 	}
 
 	return maxSheetWidth, maxSheetHeight
+}
+
+func DuringWorkingHours() bool {
+	config := getConfig()
+
+	if config.Debug {
+		return true
+	}
+
+	currentTime := time.Now()
+
+	startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), config.WorkingHours.Start, 0, 0, 0, currentTime.Location())
+	endTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), config.WorkingHours.End, 0, 0, 0, currentTime.Location())
+
+	if config.WorkingHours.End < config.WorkingHours.Start {
+		endTime = endTime.AddDate(0, 0, 1)
+	}
+
+	return currentTime.After(startTime) && currentTime.Before(endTime)
 }

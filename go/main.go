@@ -1,25 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 )
-
-var (
-	cleanupOnce sync.Once
-)
-
-func createCleanupFunc(canvas *Canvas) func() {
-	return func() {
-		fmt.Println("\nCTRL+C signal received, cleaning up...")
-		canvas.Close()
-	}
-}
 
 func main() {
 	canvas := getCanvasInstance()
+	config := getConfig()
+
+	scheduler := getSchedulerInstance(canvas, config)
+	defer scheduler.Stop()
 
 	// Prepare for cleanup
 	signalChannel := make(chan os.Signal, 1)
@@ -29,25 +20,55 @@ func main() {
 		for {
 			select {
 			case <- signalChannel:
-				cleanupOnce.Do(createCleanupFunc(canvas))
+				scheduler.Stop()
 				os.Exit(0)
 			}
 		}
 	}()
 
-	font, err := getFontFromJson("./fonts/default.json")
-	if err != nil {
-		fmt.Println("Error reading font: ", err)
+	scheduler.Start()
+
+	select {}
+}
+
+/*
+func runJob() {
+	fmt.Println("Job executed at", time.Now())
+
+	rand.Seed(time.Now().UnixNano())
+
+	callableFunctions := []func(){
+		DrawKirbyAnimation,
+		DrawClock,
 	}
 
-	textsprite := font.ConvertTextToSpritesheet("Hello, world!")
+	randomIndex := rand.Intn(len(callableFunctions))
+	callableFunctions[randomIndex]()
+}
 
-	fmt.Println("\n\n", textsprite)
-
-	spritesheet, err := getSpritesheetFromJson("./sprites/kirbyWalking.json")
-	if err != nil {
-		fmt.Println(err)
+func DrawText(textMessage string) {
+	font := getSMWFont()
+	convertOptions := ConvertOptions{
+		CharacterSpacing: 2,
 	}
-	drawOptions := DrawOptions{Reverse: true}
+	textsprite := font.ConvertTextToSpritesheet(textMessage, convertOptions)
+
+	textDrawOptions := DrawOptions{
+		ScrollSpeed: 3,
+		SpriteType: TextSprite,
+	}
+	textsprite.Draw(textDrawOptions)
+}
+
+func DrawLogo() {
+	spritesheet, _ := getSpritesheetFromJson("./sprites/youtubeLogo.json")
+
+	drawOptions := DrawOptions{
+		SpriteType: StaticSprite,
+		Loop: true,
+		Duration: 10,
+	}
+
 	spritesheet.Draw(drawOptions)
 }
+*/

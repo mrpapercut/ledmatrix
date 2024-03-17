@@ -76,9 +76,9 @@ func (c *Canvas) Close() {
 func (c *Canvas) DrawScreen(pixeldata [][]int, colors []int, offsetX int, offsetY int) {
 	for y := 0; y < len(pixeldata); y++ {
 		for x := 0; x < len(pixeldata[y]); x++ {
-			if x + offsetX < 0 || x + offsetX > c.config.Canvas.ScreenWidth || y + offsetY < 0 || y + offsetY > c.config.Canvas.ScreenHeight {
-				continue
-			}
+			// if x + offsetX < 0 || x + offsetX > c.config.Canvas.ScreenWidth || y + offsetY < 0 || y + offsetY > c.config.Canvas.ScreenHeight {
+			// 	continue
+			// }
 
 			colorIndex := pixeldata[y][x]
 			if colorIndex == -1 {

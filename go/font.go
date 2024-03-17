@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+type ConvertOptions struct {
+	CharacterSpacing int
+}
+
 type Font struct {
 	Name       string           `json:"name"`
 	Characters map[string][]int `json:"characters"`
@@ -40,15 +44,39 @@ func getFontFromJson(filename string) (*Font, error) {
 	return &font, nil
 }
 
-func (f *Font) ConvertTextToSpritesheet(text string) *Spritesheet {
+func getDefaultFont() (*Font) {
+	font, _ := getFontFromJson("./fonts/default.json")
+
+	return font
+}
+
+func getSMWFont() (*Font) {
+	font, _ := getFontFromJson("./fonts/smw.json")
+
+	return font
+}
+
+func getSegmentedDisplayFont() (*Font) {
+	font, _ := getFontFromJson("./fonts/segmented-display.json")
+
+	return font
+}
+
+func getMinimalNumbersFont() (*Font) {
+	font, _ := getFontFromJson("./fonts/minimal-numbers.json")
+
+	return font
+}
+
+func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptions) *Spritesheet {
 	config := getConfig()
 
 	spritesheet := &Spritesheet{
 		Width:     0,
 		Height:    0,
 		NumSheets: 1,
-		FPS:       1,
-		Animation: []int{1},
+		FPS:       10,
+		Animation: []int{0},
 		Colors:    []int{0, config.Canvas.TextColor},
 	}
 
@@ -68,13 +96,8 @@ func (f *Font) ConvertTextToSpritesheet(text string) *Spritesheet {
 		characterPixels := make([][]int, 0)
 
 		for j := 0; j < len(characters[i]); j++ {
-			// Convert to binary string
 			binaryString := strconv.FormatInt(int64(characters[i][j]), 2)
-
-			// Reverse the binary string
 			reversedString := reverseBinaryString(binaryString)
-
-			// Remove trailing zeros
 			reversedString = strings.TrimRight(reversedString, "0")
 
 			boolList := make([]int, 0)
@@ -93,24 +116,61 @@ func (f *Font) ConvertTextToSpritesheet(text string) *Spritesheet {
 	}
 
 	// Convert character-sheets to single sheet
-	singleSheetPixelData := PixelData{}
-	offsetX := 0
-	// y := 0
-	for y := 0; y < len(sheetsPixelData); y++ {
-		if singleSheetPixelData[y] == nil {
-			singleSheetPixelData[y] = make([][]int, 0)
+	var singleSheetPixelData PixelData
+
+	if convertOptions.CharacterSpacing == 0 {
+		convertOptions.CharacterSpacing = 2
+	}
+	maxWidth := 0
+	maxHeight := 0
+
+	for _, sheet := range sheetsPixelData {
+		width, height := getSheetWidthHeight(sheet)
+		if width > maxWidth {
+			maxWidth = width
 		}
-
-		for x := 0; x < len(sheetsPixelData[y]); x++ {
-			singleSheetPixelData[y][x + offsetX] = sheetsPixelData[y][x]
+		if height > maxHeight {
+			maxHeight = height
 		}
-
-		width, _ := getSheetWidthHeight(sheetsPixelData[y])
-
-		offsetX = offsetX + width + 2
 	}
 
+	singleSheet := make([][]int, 0)
+	maxSheetWidth := 0
+
+	for y := 0; y < maxHeight; y++ {
+		combinedRow := make([]int, 0)
+
+		for sheet := 0; sheet < len(sheetsPixelData); sheet++ {
+			width, _ := getSheetWidthHeight(sheetsPixelData[sheet])
+
+			if y < len(sheetsPixelData[sheet]) {
+				combinedRow = append(combinedRow, sheetsPixelData[sheet][y]...)
+
+				padding := width - len(sheetsPixelData[sheet][y])
+				if padding > 0 {
+					combinedRow = append(combinedRow, make([]int, padding)...)
+				}
+			} else {
+				combinedRow = append(combinedRow, make([]int, width)...)
+			}
+
+			if sheet < len(sheetsPixelData)-1 {
+				combinedRow = append(combinedRow, make([]int, convertOptions.CharacterSpacing)...)
+			}
+		}
+
+		if len(combinedRow) > maxSheetWidth {
+			maxSheetWidth = len(combinedRow)
+		}
+
+		singleSheet = append(singleSheet, combinedRow)
+	}
+
+	singleSheetPixelData = append(singleSheetPixelData, singleSheet)
 	spritesheet.PixelData = singleSheetPixelData
+
+	spritesheet.Width = maxSheetWidth
+	spritesheet.Height = maxHeight
 
 	return spritesheet
 }
