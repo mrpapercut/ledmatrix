@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+body {
+    background: rgb(0, 84, 121);
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+button {
+    // background: linear-gradient(180deg, rgba(129, 129, 129, 1) 0%, rgba(65, 65, 65, 1) 100%);
+    background: linear-gradient(180deg, rgb(0, 84, 121) 0%, rgb(0, 61, 88) 100%);
+    border: none;
+    border-radius: 4px;
+    box-shadow: 2px 2px 0 4px #000;
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.5rem;
+    padding: .25rem 1.5rem;
+    margin: 1rem 0.5rem;
+}
+
+#wrapper {
+    position: relative;
+    width: 1280px;
+    margin-top: 2%;
+    margin-left: 50%;
+    transform: translateX(-50%);
+    height: calc(100vh - 2%);
+}
+
+#file-options {
+    float: left;
+    width: 100%;
+    text-align: center;
+
+    #loadspritesheetinput {
+        display: none;
+    }
+}
+
+#centerbox {
+    background: linear-gradient(180deg, rgb(0, 84, 121) 0%, rgb(0, 61, 88) 100%);
+    border-radius: 4px;
+    box-shadow: 2px 2px 0 4px #000;
+    float: left;
+    width: 100%;
+}
+
+#colors,
+#frames {
+    float: left;
+    width: 140px;
+    padding: 10px;
+    min-height: 460px;
+    color: #fff;
+
+    h2 {
+        margin: 0 0 1rem;
+    }
+}
+
+#colors {
+    border-radius: 5px 0 0 5px;
+}
+
+.color {
+    width: 100%;
+    float: left;
+    margin-bottom: 1rem;
+    line-height: 20px;
+    text-transform: uppercase;
+
+    .color-sample {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #000;
+        float: left;
+        margin-right: 1rem;
+    }
+
+    .color-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        color: #fff;
+        font-family: 'Roboto', sans-serif;
+        float: left;
+        width: 90px;
+        font-size: 1rem;
+        text-transform: uppercase;
+    }
+
+    &.selected .color-sample {
+        border-color: #fff;
+    }
+}
+
+#frames {
+    border-radius: 0 5px 5px 0;
+}
+
+.frame {
+    width: calc(100% - 2rem);
+    float: left;
+    line-height: 2rem;
+    border: 1px solid #000;
+    padding: 0.25rem 1rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+
+    &.selected {
+        border-color: #fff;
+    }
+}
+
+canvas {
+    float: left;
+    background: #fff;
+}
+
+#animation-controls {
+    float: left;
+    text-align: center;
+    width: 100%;
+}

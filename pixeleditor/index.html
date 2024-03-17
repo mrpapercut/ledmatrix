@@ -1,9 +1,32 @@
 <!doctype html>
 <html>
 <head>
-<title>Pixeleditor</title>
+    <title>Pixeleditor</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<canvas id="canvas"></canvas>
+    <div id="wrapper">
+        <div id="file-options">
+            <button id="loadspritesheet">Load</button>
+            <input id="loadspritesheetinput" type="file" name="spritesheet"></input>
+            <button id="savespritesheet">Save</button>
+        </div>
+        <div id="centerbox">
+            <div id="colors">
+                <h2>Colors:</h2>
+            </div>
+            <canvas id="canvas"></canvas>
+            <div id="frames">
+                <h2>Frames:</h2>
+            </div>
+        </div>
+        <div id="animation-controls">
+            <button id="move-first">|&lt;</button>
+            <button id="move-previous">&lt;</button>
+            <button id="move-next">&gt;</button>
+            <button id="move-last">&gt;|</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
 </body>
 </html>

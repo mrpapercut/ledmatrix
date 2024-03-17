@@ -1,12 +1,18 @@
 {
   "dependencies": {
+    "express": "^4.18.3",
     "laravel-mix": "^6.0.49"
   },
-  "scripts": {
-    "mix": "mix"
-  },
   "devDependencies": {
+    "resolve-url-loader": "^5.0.0",
+    "sass": "^1.72.0",
+    "sass-loader": "^12.1.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.4.2"
+  },
+  "scripts": {
+    "mix": "mix",
+    "watch": "mix watch",
+    "server": "node ./server.js"
   }
 }
