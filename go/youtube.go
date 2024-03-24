@@ -10,17 +10,18 @@ import (
 )
 
 type YoutubeVideo struct {
-	VideoId string
+	VideoId   string
 	Published int64
-	Channel string
-	Title string
-	Duration int64
+	Channel   string
+	Title     string
+	Duration  int64
+	IsLive    bool
 }
 
 type Entry struct {
-	VideoId string `xml:"id"`
+	VideoId   string `xml:"id"`
 	Published string `xml:"published"`
-	Title string `xml:"title"`
+	Title     string `xml:"title"`
 }
 
 type Rss struct {
@@ -28,10 +29,13 @@ type Rss struct {
 }
 
 type VideoDetailsItem struct {
-	Id string `json:"id"`
+	Id      string `json:"id"`
 	Details struct {
 		Duration string `json:"duration"`
 	} `json:"contentDetails"`
+	Snippet struct {
+		Live string `json:"liveBroadcastContent"`
+	} `json:"snippet"`
 }
 
 type VideoDetails struct {
@@ -39,8 +43,8 @@ type VideoDetails struct {
 }
 
 type Youtube struct {
-	config *Config
-	rssUrlPrefix string
+	config                *Config
+	rssUrlPrefix          string
 	videoDetailsUrlPrefix string
 }
 
@@ -54,9 +58,9 @@ func getYoutubeInstance(config *Config) *Youtube {
 
 		if youtubeInstance == nil {
 			youtubeInstance = &Youtube{
-				config: config,
-				rssUrlPrefix: "https://www.youtube.com/feeds/videos.xml?channel_id=",
-				videoDetailsUrlPrefix: "https://youtube.googleapis.com/youtube/v3/videos?part=contentDetails&id=",
+				config:                config,
+				rssUrlPrefix:          "https://www.youtube.com/feeds/videos.xml?channel_id=",
+				videoDetailsUrlPrefix: "https://youtube.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=",
 			}
 		}
 	}
@@ -112,7 +116,7 @@ func (y *Youtube) ParseVideos(channel string, videos []Entry) {
 			fmt.Println("Error parsing published date:", err)
 		}
 
-		duration, err := y.getVideoDuration(video.VideoId)
+		duration, isLive, err := y.getVideoDetails(video.VideoId)
 		if err != nil {
 			fmt.Println("Error parsing json response:", err)
 		}
@@ -122,28 +126,36 @@ func (y *Youtube) ParseVideos(channel string, videos []Entry) {
 		}
 
 		youtubeVideo := YoutubeVideo{
-			VideoId: video.VideoId,
+			VideoId:   video.VideoId,
 			Published: parsedPublishedTime.Unix(),
-			Channel: channel,
-			Title: video.Title,
-			Duration: duration,
+			Channel:   channel,
+			Title:     video.Title,
+			Duration:  duration,
+			IsLive:    isLive,
 		}
 
 		sqlite.InsertYoutubeVideo(youtubeVideo)
 
 		fmt.Printf("Inserting video. Title: %v, published: %v, duration: %v seconds\n",
-		video.Title, parsedPublishedTime.Format("2006-02-01 15:04:05"), duration)
+			video.Title, parsedPublishedTime.Format("2006-02-01 15:04:05"), duration)
 
 		// messageType string, message string, param string, priority int, displayTimes int
-		message := fmt.Sprintf("New video for %v: %v", youtubeVideo.Channel, youtubeVideo.Title)
+		var message string
+		if youtubeVideo.IsLive {
+			message = fmt.Sprintf("%v just went live with %v", youtubeVideo.Channel, youtubeVideo.Title)
+		} else {
+			message = fmt.Sprintf("New video for %v: %v", youtubeVideo.Channel, youtubeVideo.Title)
+		}
+
 		feedMessage := FeedMessage{
-			Timestamp: youtubeVideo.Published,
-			Type: "youtubeVideo",
-			Message: message,
-			ExtraParam: youtubeVideo.Channel,
-			Priority: 1,
+			Timestamp:    youtubeVideo.Published,
+			Type:         "youtubeVideo",
+			Message:      message,
+			ExtraParam:   youtubeVideo.Channel,
+			Priority:     1,
 			DisplayTimes: 3,
 		}
+
 		sqlite.InsertFeedMessage(feedMessage)
 	}
 }
@@ -153,12 +165,12 @@ func (y *Youtube) CheckVideoExistsInDb(videoId string) bool {
 	return sqlite.VideoExists(videoId)
 }
 
-func (y *Youtube) getVideoDuration(videoId string) (int64, error) {
+func (y *Youtube) getVideoDetails(videoId string) (int64, bool, error) {
 	url := fmt.Sprintf("%s%s&key=%s", y.videoDetailsUrlPrefix, videoId, y.config.Youtube.ApiKey)
 
 	response, err := http.Get(url)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 	defer response.Body.Close()
 
@@ -166,18 +178,18 @@ func (y *Youtube) getVideoDuration(videoId string) (int64, error) {
 
 	err = json.NewDecoder(response.Body).Decode(&videoDetails)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 
 	if len(videoDetails.Items) < 1 {
 		fmt.Printf("No videodetails found for %v: %v\n", videoId, videoDetails)
-		return 0, nil
+		return 0, false, nil
 	}
 
 	duration, err2 := ParseDurationString(videoDetails.Items[0].Details.Duration)
 	if err2 != nil {
-		return 0, err2
+		return 0, false, err2
 	}
 
-	return duration, nil
+	return duration, videoDetails.Items[0].Snippet.Live == "live", nil
 }
