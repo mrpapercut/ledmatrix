@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 )
@@ -12,6 +12,7 @@ type PixelData [][][]int
 type FontData [][]int
 
 type Direction int
+
 const (
 	Left Direction = iota
 	Right
@@ -20,6 +21,7 @@ const (
 )
 
 type SpriteType int
+
 const (
 	AnimationSprite SpriteType = iota
 	TextSprite
@@ -27,13 +29,13 @@ const (
 )
 
 type DrawOptions struct {
-	SpriteType	SpriteType
-	Reverse 	bool
-	Loop    	bool
-	Scroll  	bool
+	SpriteType  SpriteType
+	Reverse     bool
+	Loop        bool
+	Scroll      bool
 	ScrollSpeed int
 	Direction   Direction
-	Duration	int
+	Duration    int
 }
 
 type Spritesheet struct {
@@ -48,14 +50,13 @@ type Spritesheet struct {
 
 func getSpritesheetFromJson(filename string) (*Spritesheet, error) {
 	file, err := os.Open(filename)
-	defer file.Close()
-
 	if err != nil {
 		fmt.Println("Error opening config file:", err)
 		return nil, err
 	}
+	defer file.Close()
 
-	jsonData, err := ioutil.ReadAll(file)
+	jsonData, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error reading config file:", err)
 		return nil, err
@@ -85,9 +86,12 @@ func (s *Spritesheet) reverseSheet(sheet [][]int) [][]int {
 
 func (s *Spritesheet) Draw(drawOptions DrawOptions) {
 	switch drawOptions.SpriteType {
-	case AnimationSprite: s.drawAnimation(drawOptions)
-	case TextSprite: s.drawText(drawOptions)
-	case StaticSprite: s.drawStaticImage(drawOptions)
+	case AnimationSprite:
+		s.drawAnimation(drawOptions)
+	case TextSprite:
+		s.drawText(drawOptions)
+	case StaticSprite:
+		s.drawStaticImage(drawOptions)
 	}
 
 	canvas := getCanvasInstance()
@@ -98,8 +102,7 @@ func (s *Spritesheet) drawAnimation(drawOptions DrawOptions) {
 	config := getConfig()
 	canvas := getCanvasInstance()
 
-	fps := s.FPS
-	frameDuration := time.Duration(int(1000/fps)) * time.Millisecond
+	frameDuration := time.Second / time.Duration(s.FPS)
 
 	animationFrames := s.Animation
 	animationIndex := 0
@@ -157,8 +160,7 @@ func (s *Spritesheet) drawText(drawOptions DrawOptions) {
 	config := getConfig()
 	canvas := getCanvasInstance()
 
-	fps := s.FPS
-	frameDuration := time.Duration(int(1000/fps)) * time.Millisecond
+	frameDuration := time.Second / time.Duration(s.FPS)
 
 	animationFrames := s.Animation
 	animationIndex := 0
@@ -220,8 +222,15 @@ func (s *Spritesheet) drawStaticImage(drawOptions DrawOptions) {
 	config := getConfig()
 	canvas := getCanvasInstance()
 
-	fps := s.FPS
-	frameDuration := time.Duration(int(1000/fps)) * time.Millisecond
+	if s.FPS < 1 {
+		s.FPS = 1
+	}
+
+	if drawOptions.Duration == 0 {
+		drawOptions.Duration = 1
+	}
+
+	frameDuration := time.Second / time.Duration(s.FPS)
 
 	animationFrames := s.Animation
 	animationIndex := 0
@@ -241,7 +250,7 @@ func (s *Spritesheet) drawStaticImage(drawOptions DrawOptions) {
 
 		currentSprite := s.PixelData[animationFrames[animationIndex]]
 
-		if animationIndex + 1 >= len(s.Animation) && !drawOptions.Loop {
+		if animationIndex+1 >= len(s.Animation) && !drawOptions.Loop {
 			return
 		} else {
 			animationIndex = (animationIndex + 1) % len(s.Animation)
