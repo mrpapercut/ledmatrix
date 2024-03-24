@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
-	"time"
 )
 
-type Jobs struct {}
+type Jobs struct{}
 
 func (j *Jobs) DrawClock() {
 	clock := Clock{}
@@ -14,8 +14,6 @@ func (j *Jobs) DrawClock() {
 }
 
 func (j *Jobs) DrawKirbyAnimation() {
-	rand.Seed(time.Now().UnixNano())
-
 	spritesheets := []string{
 		"./sprites/kirbyWalking.json",
 		"./sprites/kirbyRunning.json",
@@ -28,17 +26,31 @@ func (j *Jobs) DrawKirbyAnimation() {
 
 	animationDrawOptions := DrawOptions{
 		ScrollSpeed: 3,
-		SpriteType: AnimationSprite,
-		Reverse: rand.Intn(2) == 0,
+		SpriteType:  AnimationSprite,
+		Reverse:     rand.Intn(2) == 0,
 	}
 
 	spritesheet.Draw(animationDrawOptions)
 }
 
+func (j *Jobs) DrawLogo(logo string) {
+	log.Println("Drawing logo")
+	spritesheet, err := getSpritesheetFromJson(fmt.Sprintf("./sprites/%sLogo.json", logo))
+	if err != nil {
+		log.Fatalf("Error creating spritesheet: %v", err)
+	}
+
+	drawOptions := DrawOptions{
+		SpriteType: StaticSprite,
+		Duration:   5,
+		Loop:       true,
+	}
+
+	spritesheet.Draw(drawOptions)
+}
+
 // Screen in case there's nothing more important to show
 func (j *Jobs) DrawIdleScreen() {
-	rand.Seed(time.Now().UnixNano())
-
 	callableFunctions := []func(){
 		j.DrawKirbyAnimation,
 		j.DrawKirbyAnimation,
@@ -83,10 +95,10 @@ func (j *Jobs) DrawFeedMessage(message FeedMessage) {
 
 	drawOptions := DrawOptions{
 		SpriteType:  TextSprite,
-		Loop: 		 false,
-		Scroll:		 true,
+		Loop:        false,
+		Scroll:      true,
 		ScrollSpeed: 3,
-		Direction: 	 Left,
+		Direction:   Left,
 	}
 	messageSprite.Draw(drawOptions)
 }
