@@ -14,10 +14,10 @@ import (
 var canvasLock = &sync.Mutex{}
 
 type Canvas struct {
-	matrix *C.struct_RGBLedMatrix
-	canvas *C.struct_LedCanvas
+	matrix  *C.struct_RGBLedMatrix
+	canvas  *C.struct_LedCanvas
 	options C.struct_RGBLedMatrixOptions
-	config *Config
+	config  *Config
 }
 
 var canvasInstance *Canvas
@@ -42,6 +42,9 @@ func (c *Canvas) SetDefaultOptions() {
 	c.options.rows = C.int(c.config.Canvas.ScreenHeight)
 	c.options.brightness = C.int(c.config.Canvas.Brightness)
 	c.options.disable_hardware_pulsing = true
+
+	// For whatever reason the lib swaps G and B; this corrects that
+	c.options.led_rgb_sequence = C.CString("RBG")
 }
 
 func (c *Canvas) init() {
@@ -57,7 +60,7 @@ func (c *Canvas) SetPixel(_x int, _y int, _r int, _g int, _b int) {
 	x := C.int(_x)
 	y := C.int(_y)
 
-	r := C.uchar(0xff)
+	r := C.uchar(_r)
 	g := C.uchar(_g)
 	b := C.uchar(_b)
 
@@ -76,10 +79,6 @@ func (c *Canvas) Close() {
 func (c *Canvas) DrawScreen(pixeldata [][]int, colors []int, offsetX int, offsetY int) {
 	for y := 0; y < len(pixeldata); y++ {
 		for x := 0; x < len(pixeldata[y]); x++ {
-			// if x + offsetX < 0 || x + offsetX > c.config.Canvas.ScreenWidth || y + offsetY < 0 || y + offsetY > c.config.Canvas.ScreenHeight {
-			// 	continue
-			// }
-
 			colorIndex := pixeldata[y][x]
 			if colorIndex == -1 {
 				continue
@@ -92,7 +91,7 @@ func (c *Canvas) DrawScreen(pixeldata [][]int, colors []int, offsetX int, offset
 
 			r, g, b := convertColorToRGB(color)
 
-			c.SetPixel(x + offsetX, y + offsetY, r, g, b)
+			c.SetPixel(x+offsetX, y+offsetY, r, g, b)
 		}
 	}
 }
