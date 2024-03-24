@@ -135,7 +135,7 @@ func (s *SQLite) GetLatestFeedMessage(priority int) (FeedMessage, error) {
 	err = db.QueryRow(getFeedMessageQuery, priority, yesterday).Scan(&result.Timestamp, &result.Type, &result.Message, &result.ExtraParam, &result.Priority, &result.DisplayTimes)
 
 	if err == sql.ErrNoRows {
-		fmt.Println("No rows found")
+		// fmt.Println("No rows found")
 		return result, nil
 	} else if err != nil {
 		fmt.Println("Error retrieving data from db:", err)
