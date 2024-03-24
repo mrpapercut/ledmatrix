@@ -34,7 +34,6 @@ func (j *Jobs) DrawKirbyAnimation() {
 }
 
 func (j *Jobs) DrawLogo(logo string) {
-	log.Println("Drawing logo")
 	spritesheet, err := getSpritesheetFromJson(fmt.Sprintf("./sprites/%sLogo.json", logo))
 	if err != nil {
 		log.Fatalf("Error creating spritesheet: %v", err)
@@ -68,7 +67,7 @@ func (j *Jobs) GetHighPriorityMessage() (bool, FeedMessage) {
 	priority := 1
 	message, err := sqlite.GetLatestFeedMessage(priority)
 	if err != nil {
-		fmt.Println("Error retrieving latest feed message:", err)
+		log.Println("Error retrieving latest feed message:", err)
 		return false, FeedMessage{}
 	}
 
@@ -81,7 +80,7 @@ func (j *Jobs) GetLowPriorityMessage() (bool, FeedMessage) {
 	priority := 2
 	message, err := sqlite.GetLatestFeedMessage(priority)
 	if err != nil {
-		fmt.Println("Error retrieving latest feed message:", err)
+		log.Println("Error retrieving latest feed message:", err)
 		return false, FeedMessage{}
 	}
 
