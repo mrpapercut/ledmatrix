@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"sync"
 )
@@ -12,7 +12,7 @@ var configLock = &sync.Mutex{}
 
 type Config struct {
 	Debug bool `json:"debug"`
-	Log struct {
+	Log   struct {
 		Level     string `json:"level"`
 		LogToFile bool   `json:"log_to_file"`
 		Filename  string `json:"filename"`
@@ -28,7 +28,7 @@ type Config struct {
 	} `json:"db"`
 	WorkingHours struct {
 		Start int `json:"start"`
-		End int `json:"end"`
+		End   int `json:"end"`
 	} `json:"working_hours"`
 	Youtube struct {
 		ApiKey   string            `json:"apikey"`
@@ -58,14 +58,13 @@ func getConfig() *Config {
 
 func (c *Config) init() {
 	file, err := os.Open("../config.json")
-	defer file.Close()
-
 	if err != nil {
 		fmt.Println("Error opening config file:", err)
 		return
 	}
+	defer file.Close()
 
-	jsonData, err := ioutil.ReadAll(file)
+	jsonData, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error reading config file:", err)
 		return

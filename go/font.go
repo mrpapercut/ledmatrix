@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -20,14 +20,13 @@ type Font struct {
 
 func getFontFromJson(filename string) (*Font, error) {
 	file, err := os.Open(filename)
-	defer file.Close()
-
 	if err != nil {
 		fmt.Println("Error opening config file:", err)
 		return nil, err
 	}
+	defer file.Close()
 
-	jsonData, err := ioutil.ReadAll(file)
+	jsonData, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error reading config file:", err)
 		return nil, err
@@ -44,25 +43,25 @@ func getFontFromJson(filename string) (*Font, error) {
 	return &font, nil
 }
 
-func getDefaultFont() (*Font) {
+func getDefaultFont() *Font {
 	font, _ := getFontFromJson("./fonts/default.json")
 
 	return font
 }
 
-func getSMWFont() (*Font) {
+func getSMWFont() *Font {
 	font, _ := getFontFromJson("./fonts/smw.json")
 
 	return font
 }
 
-func getSegmentedDisplayFont() (*Font) {
+func getSegmentedDisplayFont() *Font {
 	font, _ := getFontFromJson("./fonts/segmented-display.json")
 
 	return font
 }
 
-func getMinimalNumbersFont() (*Font) {
+func getMinimalNumbersFont() *Font {
 	font, _ := getFontFromJson("./fonts/minimal-numbers.json")
 
 	return font

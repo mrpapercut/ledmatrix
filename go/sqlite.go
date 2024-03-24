@@ -3,19 +3,19 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"sync"
 	"os"
+	"sync"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type FeedMessage struct {
-	Timestamp int64
-	Type string
-	Message string
-	ExtraParam string
-	Priority int
+	Timestamp    int64
+	Type         string
+	Message      string
+	ExtraParam   string
+	Priority     int
 	DisplayTimes int
 }
 
@@ -53,12 +53,11 @@ func (s *SQLite) init() {
 	}
 
 	db, err := sql.Open("sqlite3", s.config.Database.Filename)
-	defer db.Close()
-
 	if err != nil {
 		fmt.Println("Error connecting to database:", err)
 		return
 	}
+	defer db.Close()
 
 	createTablesQueries := []string{
 		`CREATE TABLE IF NOT EXISTS feed (
