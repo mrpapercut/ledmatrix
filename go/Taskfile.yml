@@ -1,0 +1,64 @@
+version: '3'
+
+variables:
+  TARGET: &TARGET librgbmatrix
+  OBJECTS: &OBJECTS gpio.o led-matrix.o options-initialize.o framebuffer.o \
+            thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o \
+            pixel-mapper.o multiplex-mappers.o content-streamer.o
+  AR: &AR ar
+  CXX: &CXX g++
+  CC: &CC gcc
+  INCDIR: &INCDIR ../include
+  CXXFLAGS: &CXXFLAGS "-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES) -fno-exceptions -std=c++11"
+  CFLAGS: &CFLAGS "-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES)"
+
+tasks:
+  ledmatrix:
+    cmds:
+      - go build -v -i main.go -o dist/ledmatrix
+
+  library:
+    deps:
+      - *TARGET.a
+      - *TARGET.so.1
+
+  *TARGET.a: *OBJECTS
+    cmds:
+      - *AR rcs $@ $^
+
+  *TARGET.so.1: *OBJECTS
+    cmds:
+      - *CXX -shared -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lstdc++
+
+  led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
+    cmds:
+      - *CXX -I$(INCDIR) *CXXFLAGS -c -o $@ $<
+
+  thread.o: thread.cc $(INCDIR)/thread.h
+    cmds:
+      - *CXX -I$(INCDIR) *CXXFLAGS -c -o $@ $<
+
+  framebuffer.o: framebuffer.cc framebuffer-internal.h
+    cmds:
+      - *CXX -I$(INCDIR) *CXXFLAGS -c -o $@ $<
+
+  graphics.o: graphics.cc utf8-internal.h
+    cmds:
+      - *CXX -I$(INCDIR) *CXXFLAGS -c -o $@ $<
+
+  %.o: %.cc compiler-flags
+    cmds:
+      - *CXX -I$(INCDIR) *CXXFLAGS -c -o $@ $<
+
+  %.o: %.c compiler-flags
+    cmds:
+      - *CC -I$(INCDIR) *CFLAGS -c -o $@ $<
+
+  clean:
+    cmds:
+      - rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
+
+  compiler-flags: FORCE
+    cmds:
+      - echo '$(CXX) $(CXXFLAGS)' | cmp -s - $@
+      - echo '$(CC) $(CFLAGS)' | cmp -s - $@
