@@ -17,12 +17,9 @@ func main() {
 	signal.Notify(signalChannel, os.Interrupt)
 
 	go func() {
-		for {
-			select {
-			case <- signalChannel:
-				scheduler.Stop()
-				os.Exit(0)
-			}
+		for range signalChannel {
+			scheduler.Stop()
+			os.Exit(0)
 		}
 	}()
 
@@ -30,45 +27,3 @@ func main() {
 
 	select {}
 }
-
-/*
-func runJob() {
-	fmt.Println("Job executed at", time.Now())
-
-	rand.Seed(time.Now().UnixNano())
-
-	callableFunctions := []func(){
-		DrawKirbyAnimation,
-		DrawClock,
-	}
-
-	randomIndex := rand.Intn(len(callableFunctions))
-	callableFunctions[randomIndex]()
-}
-
-func DrawText(textMessage string) {
-	font := getSMWFont()
-	convertOptions := ConvertOptions{
-		CharacterSpacing: 2,
-	}
-	textsprite := font.ConvertTextToSpritesheet(textMessage, convertOptions)
-
-	textDrawOptions := DrawOptions{
-		ScrollSpeed: 3,
-		SpriteType: TextSprite,
-	}
-	textsprite.Draw(textDrawOptions)
-}
-
-func DrawLogo() {
-	spritesheet, _ := getSpritesheetFromJson("./sprites/youtubeLogo.json")
-
-	drawOptions := DrawOptions{
-		SpriteType: StaticSprite,
-		Loop: true,
-		Duration: 10,
-	}
-
-	spritesheet.Draw(drawOptions)
-}
-*/
