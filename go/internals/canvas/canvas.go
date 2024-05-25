@@ -1,14 +1,17 @@
-package main
+package canvas
 
 /*
-#cgo LDFLAGS: -L. -lrgbmatrix -lstdc++ -lm
-#include "../include/led-matrix-c.h"
+#cgo LDFLAGS: -L../../../lib -lrgbmatrix -lstdc++ -lm
+#include "../../../include/led-matrix-c.h"
 #include <stdlib.h>
 */
 import "C"
 import (
 	"sync"
 	"unsafe"
+
+	"github.com/mrpapercut/ledmatrix/internals/config"
+	"github.com/mrpapercut/ledmatrix/internals/utils"
 )
 
 var canvasLock = &sync.Mutex{}
@@ -17,12 +20,12 @@ type Canvas struct {
 	matrix  *C.struct_RGBLedMatrix
 	canvas  *C.struct_LedCanvas
 	options C.struct_RGBLedMatrixOptions
-	config  *Config
+	config  *config.Config
 }
 
 var canvasInstance *Canvas
 
-func getCanvasInstance() *Canvas {
+func GetCanvasInstance() *Canvas {
 	if canvasInstance == nil {
 		canvasLock.Lock()
 		defer canvasLock.Unlock()
@@ -48,7 +51,7 @@ func (c *Canvas) SetDefaultOptions() {
 }
 
 func (c *Canvas) init() {
-	c.config = getConfig()
+	c.config = config.GetConfig()
 
 	c.SetDefaultOptions()
 
@@ -89,7 +92,7 @@ func (c *Canvas) DrawScreen(pixeldata [][]int, colors []int, offsetX int, offset
 				continue
 			}
 
-			r, g, b := convertColorToRGB(color)
+			r, g, b := utils.ConvertColorToRGB(color)
 
 			c.SetPixel(x+offsetX, y+offsetY, r, g, b)
 		}

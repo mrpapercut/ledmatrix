@@ -1,4 +1,4 @@
-package main
+package font
 
 import (
 	"encoding/json"
@@ -7,11 +7,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
-)
 
-type ConvertOptions struct {
-	CharacterSpacing int
-}
+	"github.com/mrpapercut/ledmatrix/internals/config"
+	"github.com/mrpapercut/ledmatrix/internals/spritesheet"
+	"github.com/mrpapercut/ledmatrix/internals/types"
+	"github.com/mrpapercut/ledmatrix/internals/utils"
+)
 
 type Font struct {
 	Name       string           `json:"name"`
@@ -43,50 +44,50 @@ func getFontFromJson(filename string) (*Font, error) {
 	return &font, nil
 }
 
-func getDefaultFont() *Font {
+func GetDefaultFont() *Font {
 	font, _ := getFontFromJson("./fonts/default.json")
 
 	return font
 }
 
-func getSMWFont() *Font {
+func GetSMWFont() *Font {
 	font, _ := getFontFromJson("./fonts/smw.json")
 
 	return font
 }
 
-func getSegmentedDisplayFont() *Font {
+func GetSegmentedDisplayFont() *Font {
 	font, _ := getFontFromJson("./fonts/segmented-display.json")
 
 	return font
 }
 
-func getMinimalNumbersFont() *Font {
+func GetMinimalNumbersFont() *Font {
 	font, _ := getFontFromJson("./fonts/minimal-numbers.json")
 
 	return font
 }
 
-func getFontByName(name string) *Font {
+func GetFontByName(name string) *Font {
 	fontfns := map[string]func() *Font{
-		"default":         getDefaultFont,
-		"smw":             getSMWFont,
-		"segmented":       getSegmentedDisplayFont,
-		"minimal-numbers": getMinimalNumbersFont,
+		"default":         GetDefaultFont,
+		"smw":             GetSMWFont,
+		"segmented":       GetSegmentedDisplayFont,
+		"minimal-numbers": GetMinimalNumbersFont,
 	}
 
 	if fontfn, ok := fontfns[name]; ok {
 		return fontfn()
 	} else {
 		log.Printf("Font not found: %s", name)
-		return getDefaultFont()
+		return GetDefaultFont()
 	}
 }
 
-func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptions) *Spritesheet {
-	config := getConfig()
+func (f *Font) ConvertTextToSpritesheet(text string, convertOptions types.ConvertOptions) *spritesheet.Spritesheet {
+	config := config.GetConfig()
 
-	spritesheet := &Spritesheet{
+	sheet := &spritesheet.Spritesheet{
 		Width:     0,
 		Height:    0,
 		FPS:       10,
@@ -105,13 +106,13 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptio
 	}
 
 	// Convert font-characters to sheets
-	sheetsPixelData := PixelData{}
+	sheetsPixelData := types.PixelData{}
 	for i := 0; i < len(characters); i++ {
 		characterPixels := make([][]int, 0)
 
 		for j := 0; j < len(characters[i]); j++ {
 			binaryString := strconv.FormatInt(int64(characters[i][j]), 2)
-			reversedString := reverseBinaryString(binaryString)
+			reversedString := utils.ReverseBinaryString(binaryString)
 			reversedString = strings.TrimRight(reversedString, "0")
 
 			boolList := make([]int, 0)
@@ -130,7 +131,7 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptio
 	}
 
 	// Convert character-sheets to single sheet
-	var singleSheetPixelData PixelData
+	var singleSheetPixelData types.PixelData
 
 	if convertOptions.CharacterSpacing == 0 {
 		convertOptions.CharacterSpacing = 2
@@ -139,7 +140,7 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptio
 	maxHeight := 0
 
 	for _, sheet := range sheetsPixelData {
-		width, height := getSheetWidthHeight(sheet)
+		width, height := utils.GetSheetWidthHeight(sheet)
 		if width > maxWidth {
 			maxWidth = width
 		}
@@ -155,7 +156,7 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptio
 		combinedRow := make([]int, 0)
 
 		for sheet := 0; sheet < len(sheetsPixelData); sheet++ {
-			width, _ := getSheetWidthHeight(sheetsPixelData[sheet])
+			width, _ := utils.GetSheetWidthHeight(sheetsPixelData[sheet])
 
 			if y < len(sheetsPixelData[sheet]) {
 				combinedRow = append(combinedRow, sheetsPixelData[sheet][y]...)
@@ -181,10 +182,10 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptio
 	}
 
 	singleSheetPixelData = append(singleSheetPixelData, singleSheet)
-	spritesheet.PixelData = singleSheetPixelData
+	sheet.PixelData = singleSheetPixelData
 
-	spritesheet.Width = maxSheetWidth
-	spritesheet.Height = maxHeight
+	sheet.Width = maxSheetWidth
+	sheet.Height = maxHeight
 
-	return spritesheet
+	return sheet
 }

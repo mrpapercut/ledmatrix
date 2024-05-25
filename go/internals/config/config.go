@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"encoding/json"
@@ -42,7 +42,7 @@ type Config struct {
 
 var configInstance *Config
 
-func getConfig() *Config {
+func GetConfig() *Config {
 	if configInstance == nil {
 		configLock.Lock()
 		defer configLock.Unlock()

@@ -1,32 +1,26 @@
-package main
+package sqlite
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 	"os"
 	"sync"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/mrpapercut/ledmatrix/internals/config"
+	"github.com/mrpapercut/ledmatrix/internals/types"
 )
 
-type FeedMessage struct {
-	Timestamp    int64
-	Type         string
-	Message      string
-	ExtraParam   string
-	Priority     int
-	DisplayTimes int
-}
-
 type SQLite struct {
-	config *Config
+	config *config.Config
 }
 
 var sqliteLock = &sync.Mutex{}
 var sqliteInstance *SQLite
 
-func getSQLiteInstance() *SQLite {
+func GetSQLiteInstance() *SQLite {
 	if sqliteInstance == nil {
 		sqliteLock.Lock()
 		defer sqliteLock.Unlock()
@@ -41,20 +35,20 @@ func getSQLiteInstance() *SQLite {
 }
 
 func (s *SQLite) init() {
-	s.config = getConfig()
+	s.config = config.GetConfig()
 
 	if _, err := os.Stat(s.config.Database.Filename); os.IsNotExist(err) {
 		// If it doesn't exist, create it
 		_, err := os.Create(s.config.Database.Filename)
 		if err != nil {
-			fmt.Println("Error creating database file:", err)
+			log.Fatal("Error creating database file:", err)
 			return
 		}
 	}
 
 	db, err := sql.Open("sqlite3", s.config.Database.Filename)
 	if err != nil {
-		fmt.Println("Error connecting to database:", err)
+		log.Fatal("Error connecting to database:", err)
 		return
 	}
 	defer db.Close()
@@ -77,27 +71,33 @@ func (s *SQLite) init() {
 			duration INTEGER,
 			UNIQUE (video_id)
 		);`,
+		`CREATE TABLE IF NOT EXISTS weather (
+			timestamp INTEGER NOT NULL,
+			message TEXT NOT NULL,
+			type TEXT NOT NULL
+		);
+		`,
 	}
 
 	for _, query := range createTablesQueries {
 		_, err = db.Exec(query)
 		if err != nil {
-			fmt.Println("Error creating tables:", err)
+			log.Fatal("Error creating tables:", err)
 		}
 	}
 }
 
-func (s *SQLite) InsertFeedMessage(feedMessage FeedMessage) {
+func (s *SQLite) InsertFeedMessage(feedMessage types.FeedMessage) {
 	db, err := sql.Open("sqlite3", s.config.Database.Filename)
 	if err != nil {
-		fmt.Println("Error connecting to database:", err)
+		log.Println("Error connecting to database:", err)
 		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("INSERT INTO feed(timestamp, type, message, param, priority, display_times) values(?, ?, ?, ?, ?, ?)")
 	if err != nil {
-		fmt.Println("Error creating statement:", err)
+		log.Println("Error creating statement:", err)
 		return
 	}
 	defer stmt.Close()
@@ -111,16 +111,16 @@ func (s *SQLite) InsertFeedMessage(feedMessage FeedMessage) {
 		feedMessage.DisplayTimes,
 	)
 	if err != nil {
-		fmt.Println("Error inserting feed message:", err)
+		log.Println("Error inserting feed message:", err)
 	}
 }
 
-func (s *SQLite) GetLatestFeedMessage(priority int) (FeedMessage, error) {
-	var result FeedMessage
+func (s *SQLite) GetLatestFeedMessage(priority int) (types.FeedMessage, error) {
+	var result types.FeedMessage
 
 	db, err := sql.Open("sqlite3", s.config.Database.Filename)
 	if err != nil {
-		fmt.Println("Error connecting to database:", err)
+		log.Println("Error connecting to database:", err)
 		return result, err
 	}
 	defer db.Close()
@@ -130,74 +130,76 @@ func (s *SQLite) GetLatestFeedMessage(priority int) (FeedMessage, error) {
 	WHERE priority = ?
 	AND display_times > 0
 	AND timestamp > ?
+	AND timestamp < CURRENT_TIMESTAMP
 	ORDER BY display_times DESC, timestamp DESC LIMIT 1`
+
 	yesterday := time.Now().Add(-24 * time.Hour).Unix()
+
 	err = db.QueryRow(getFeedMessageQuery, priority, yesterday).Scan(&result.Timestamp, &result.Type, &result.Message, &result.ExtraParam, &result.Priority, &result.DisplayTimes)
 
 	if err == sql.ErrNoRows {
-		// fmt.Println("No rows found")
-		return result, nil
+		return result, err
 	} else if err != nil {
-		fmt.Println("Error retrieving data from db:", err)
+		log.Println("Error retrieving data from db:", err)
 		return result, err
 	}
 
 	return result, nil
 }
 
-func (s *SQLite) LowerPriorityAndDisplayTimes(message FeedMessage) {
+func (s *SQLite) LowerPriorityAndDisplayTimes(message types.FeedMessage) {
 	db, err := sql.Open("sqlite3", s.config.Database.Filename)
 	if err != nil {
-		fmt.Println("Error connecting to database:", err)
+		log.Println("Error connecting to database:", err)
 		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("UPDATE feed SET display_times = display_times - 1, priority = 2 WHERE message = ?")
 	if err != nil {
-		fmt.Println("Error creating statement:", err)
+		log.Println("Error creating statement:", err)
 		return
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(message.Message)
 	if err != nil {
-		fmt.Printf("Error lowering display_times for %v: %v\n", message.Message, err)
+		log.Printf("Error lowering display_times for %v: %v\n", message.Message, err)
 	}
 }
 
-func (s *SQLite) InsertYoutubeVideo(video YoutubeVideo) {
+func (s *SQLite) InsertYoutubeVideo(video types.YoutubeVideo) {
 	db, err := sql.Open("sqlite3", s.config.Database.Filename)
 	if err != nil {
-		fmt.Println("Error connecting to database:", err)
+		log.Println("Error connecting to database:", err)
 		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("INSERT INTO yt_videos(video_id, published, channel, title, duration) values(?, ?, ?, ?, ?)")
 	if err != nil {
-		fmt.Println("Error creating statement:", err)
+		log.Println("Error creating statement:", err)
 		return
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(video.VideoId, video.Published, video.Channel, video.Title, video.Duration)
+	_, err = stmt.Exec(video.VideoId, video.Published, video.Channel, video.Title, video.Details.Duration)
 	if err != nil {
-		fmt.Println("Error inserting youtube video:", err)
+		log.Println("Error inserting youtube video:", err)
 	}
 }
 
 func (s *SQLite) VideoExists(videoId string) bool {
 	db, err := sql.Open("sqlite3", s.config.Database.Filename)
 	if err != nil {
-		fmt.Println("Error connecting to database:", err)
+		log.Println("Error connecting to database:", err)
 		return false
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("SELECT video_id FROM yt_videos WHERE video_id = ?")
 	if err != nil {
-		fmt.Println("Error creating statement:", err)
+		log.Println("Error creating statement:", err)
 		return false
 	}
 	defer stmt.Close()
@@ -208,8 +210,12 @@ func (s *SQLite) VideoExists(videoId string) bool {
 	if err == sql.ErrNoRows {
 		return false
 	} else if err != nil {
-		fmt.Println("Error retrieving data from db:", err)
+		log.Println("Error retrieving data from db:", err)
 	}
 
 	return true
+}
+
+func (s *SQLite) InsertWeather() {
+
 }

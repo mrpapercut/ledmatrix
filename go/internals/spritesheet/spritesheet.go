@@ -1,4 +1,4 @@
-package main
+package spritesheet
 
 import (
 	"encoding/json"
@@ -6,49 +6,22 @@ import (
 	"io"
 	"os"
 	"time"
+
+	"github.com/mrpapercut/ledmatrix/internals/canvas"
+	"github.com/mrpapercut/ledmatrix/internals/config"
+	"github.com/mrpapercut/ledmatrix/internals/types"
 )
-
-type PixelData [][][]int
-type FontData [][]int
-
-type Direction int
-
-const (
-	Left Direction = iota
-	Right
-	Up
-	Down
-)
-
-type SpriteType int
-
-const (
-	AnimationSprite SpriteType = iota
-	TextSprite
-	StaticSprite
-)
-
-type DrawOptions struct {
-	SpriteType  SpriteType
-	Reverse     bool
-	Loop        bool
-	Scroll      bool
-	ScrollSpeed int
-	Direction   Direction
-	Duration    int
-}
 
 type Spritesheet struct {
-	Width     int       `json:"width"`
-	Height    int       `json:"height"`
-	NumSheets int       `json:"num_sheets"`
-	FPS       int       `json:"fps"`
-	Animation []int     `json:"animation"`
-	Colors    []int     `json:"colors"`
-	PixelData PixelData `json:"pixeldata"`
+	Width     int             `json:"width"`
+	Height    int             `json:"height"`
+	FPS       int             `json:"fps"`
+	Animation []int           `json:"animation"`
+	Colors    []int           `json:"colors"`
+	PixelData types.PixelData `json:"pixeldata"`
 }
 
-func getSpritesheetFromJson(filename string) (*Spritesheet, error) {
+func GetSpritesheetFromJson(filename string) (*Spritesheet, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println("Error opening config file:", err)
@@ -84,23 +57,23 @@ func (s *Spritesheet) reverseSheet(sheet [][]int) [][]int {
 	return sheet
 }
 
-func (s *Spritesheet) Draw(drawOptions DrawOptions) {
+func (s *Spritesheet) Draw(drawOptions types.DrawOptions) {
 	switch drawOptions.SpriteType {
-	case AnimationSprite:
+	case types.AnimationSprite:
 		s.drawAnimation(drawOptions)
-	case TextSprite:
+	case types.TextSprite:
 		s.drawText(drawOptions)
-	case StaticSprite:
+	case types.StaticSprite:
 		s.drawStaticImage(drawOptions)
 	}
 
-	canvas := getCanvasInstance()
+	canvas := canvas.GetCanvasInstance()
 	canvas.Clear()
 }
 
-func (s *Spritesheet) drawAnimation(drawOptions DrawOptions) {
-	config := getConfig()
-	canvas := getCanvasInstance()
+func (s *Spritesheet) drawAnimation(drawOptions types.DrawOptions) {
+	config := config.GetConfig()
+	canvas := canvas.GetCanvasInstance()
 
 	frameDuration := time.Second / time.Duration(s.FPS)
 
@@ -156,9 +129,9 @@ func (s *Spritesheet) drawAnimation(drawOptions DrawOptions) {
 	}
 }
 
-func (s *Spritesheet) drawText(drawOptions DrawOptions) {
-	config := getConfig()
-	canvas := getCanvasInstance()
+func (s *Spritesheet) drawText(drawOptions types.DrawOptions) {
+	config := config.GetConfig()
+	canvas := canvas.GetCanvasInstance()
 
 	frameDuration := time.Second / time.Duration(s.FPS)
 
@@ -173,7 +146,7 @@ func (s *Spritesheet) drawText(drawOptions DrawOptions) {
 	offsetX := 0 - maxSpriteWidth
 	offsetY := (config.Canvas.ScreenHeight - maxSpriteHeight) / 2
 
-	if drawOptions.Direction == Left {
+	if drawOptions.Direction == types.Left {
 		offsetX = config.Canvas.ScreenWidth
 	}
 
@@ -193,7 +166,7 @@ func (s *Spritesheet) drawText(drawOptions DrawOptions) {
 
 		canvas.DrawScreen(currentSprite, colors, offsetX, offsetY)
 
-		if drawOptions.Reverse || drawOptions.Direction == Left {
+		if drawOptions.Reverse || drawOptions.Direction == types.Left {
 			offsetX = offsetX - drawOptions.ScrollSpeed
 			if offsetX < (0 - maxSpriteWidth) {
 				if drawOptions.Loop {
@@ -218,16 +191,12 @@ func (s *Spritesheet) drawText(drawOptions DrawOptions) {
 	}
 }
 
-func (s *Spritesheet) drawStaticImage(drawOptions DrawOptions) {
-	config := getConfig()
-	canvas := getCanvasInstance()
+func (s *Spritesheet) drawStaticImage(drawOptions types.DrawOptions) {
+	config := config.GetConfig()
+	canvas := canvas.GetCanvasInstance()
 
-	if s.FPS < 1 {
+	if s.FPS == 0 {
 		s.FPS = 1
-	}
-
-	if drawOptions.Duration == 0 {
-		drawOptions.Duration = 1
 	}
 
 	frameDuration := time.Second / time.Duration(s.FPS)
@@ -243,28 +212,19 @@ func (s *Spritesheet) drawStaticImage(drawOptions DrawOptions) {
 	offsetX := (config.Canvas.ScreenWidth - maxSpriteWidth) / 2
 	offsetY := (config.Canvas.ScreenHeight - maxSpriteHeight) / 2
 
-	timesRun := 0
-
 	for {
 		canvas.Clear()
 
 		currentSprite := s.PixelData[animationFrames[animationIndex]]
 
-		if animationIndex+1 >= len(s.Animation) && !drawOptions.Loop {
-			return
-		} else {
-			animationIndex = (animationIndex + 1) % len(s.Animation)
-		}
-
 		canvas.DrawScreen(currentSprite, colors, offsetX, offsetY)
 
 		time.Sleep(frameDuration)
 
-		if drawOptions.Duration > 0 {
-			timesRun += 1
-			if timesRun >= drawOptions.Duration {
-				return
-			}
+		if animationIndex+1 >= len(s.Animation) && !drawOptions.Loop {
+			return
+		} else {
+			animationIndex = (animationIndex + 1) % len(s.Animation)
 		}
 	}
 }

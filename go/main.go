@@ -3,14 +3,18 @@ package main
 import (
 	"os"
 	"os/signal"
+
+	"github.com/mrpapercut/ledmatrix/internals/canvas"
+	"github.com/mrpapercut/ledmatrix/internals/config"
+	"github.com/mrpapercut/ledmatrix/internals/scheduler"
 )
 
 func main() {
-	canvas := getCanvasInstance()
-	config := getConfig()
+	canvas := canvas.GetCanvasInstance()
+	config := config.GetConfig()
 
-	scheduler := getSchedulerInstance(canvas, config)
-	defer scheduler.Stop()
+	schedulerInstance := scheduler.GetSchedulerInstance(canvas, config)
+	defer schedulerInstance.Stop()
 
 	// Prepare for cleanup
 	signalChannel := make(chan os.Signal, 1)
@@ -18,12 +22,12 @@ func main() {
 
 	go func() {
 		for range signalChannel {
-			scheduler.Stop()
+			schedulerInstance.Stop()
 			os.Exit(0)
 		}
 	}()
 
-	scheduler.Start()
+	schedulerInstance.Start()
 
 	select {}
 }

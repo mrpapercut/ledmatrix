@@ -1,8 +1,11 @@
-package main
+package clock
 
 import (
 	"fmt"
 	"time"
+
+	"github.com/mrpapercut/ledmatrix/internals/font"
+	"github.com/mrpapercut/ledmatrix/internals/types"
 )
 
 type Clock struct {
@@ -17,24 +20,24 @@ func (c *Clock) DrawDigitalClock() {
 
 	startTime := c.formatTime(currentTime)
 
-	font := getFontByName("minimal-numbers")
-	convertOptions := ConvertOptions{
+	f := font.GetFontByName("minimal-numbers")
+	convertOptions := types.ConvertOptions{
 		CharacterSpacing: 1,
 	}
-	timeSprite := font.ConvertTextToSpritesheet(startTime, convertOptions)
+	timeSprite := f.ConvertTextToSpritesheet(startTime, convertOptions)
 	timeSprite.Animation = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	timeSprite.FPS = 1
 
 	for i := 0; i < 10; i++ {
 		futureTime := currentTime.Add(time.Duration(i+1) * time.Second)
 
-		sprite := font.ConvertTextToSpritesheet(c.formatTime(futureTime), convertOptions)
+		sprite := f.ConvertTextToSpritesheet(c.formatTime(futureTime), convertOptions)
 
 		timeSprite.PixelData = append(timeSprite.PixelData, sprite.PixelData[0])
 	}
 
-	drawOptions := DrawOptions{
-		SpriteType: StaticSprite,
+	drawOptions := types.DrawOptions{
+		SpriteType: types.StaticSprite,
 	}
 	timeSprite.Draw(drawOptions)
 }

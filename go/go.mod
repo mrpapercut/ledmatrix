@@ -1,4 +1,4 @@
-module ledmatrix
+module github.com/mrpapercut/ledmatrix
 
 go 1.22
 

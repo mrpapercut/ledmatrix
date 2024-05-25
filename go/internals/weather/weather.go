@@ -1,62 +1,14 @@
-package main
+package weather
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
+
+	"github.com/mrpapercut/ledmatrix/internals/config"
+	"github.com/mrpapercut/ledmatrix/internals/types"
 )
-
-type UnitValue struct {
-	Value float64 `json:"Value"`
-	Unit  string  `json:"Unit"`
-}
-
-type Condition struct {
-	Time        int    `json:"EpochTime"`
-	WeatherText string `json:"WeatherText"`
-	WeatherIcon int    `json:"WeatherIcon"`
-	Temperature struct {
-		Metric UnitValue `json:"Metric"`
-	} `json:"Temperature"`
-	PrecipitationSummary struct {
-		Precipitation struct {
-			Metric UnitValue `json:"Metric"`
-		} `json:"Precipitation"`
-	} `json:"PrecipitationSummary"`
-}
-
-type CurrentConditions []Condition
-
-type DayPart struct {
-	Icon            int       `json:"Icon"`
-	Phrase          string    `json:"ShortPhrase"`
-	RainProbability int       `json:"RainProbability"`
-	Rain            UnitValue `json:"Rain"`
-	Snow            UnitValue `json:"Snow"`
-}
-
-type DailyForecast struct {
-	Date int `json:"EpochDate"`
-	Sun  struct {
-		Rise int `json:"EpochRise"`
-		Set  int `json:"EpochSet"`
-	} `json:"Sun"`
-	Moon struct {
-		Rise int `json:"EpochRise"`
-		Set  int `json:"EpochSet"`
-	} `json:"Moon"`
-	Temperature struct {
-		Minimum UnitValue `json:"Minimum"`
-		Maximum UnitValue `json:"Maximum"`
-	} `json:"Temperature"`
-	Day   DayPart `json:"Day"`
-	Night DayPart `json:"Night"`
-}
-
-type FiveDayForecast struct {
-	DailyForecasts []DailyForecast `json:"DailyForecasts"`
-}
 
 type Weather struct {
 	ApiKey         string
@@ -67,8 +19,8 @@ type Weather struct {
 var weatherLock = &sync.Mutex{}
 var weatherInstance *Weather
 
-func getWeatherInstance() *Weather {
-	config := getConfig()
+func GetWeatherInstance() *Weather {
+	config := config.GetConfig()
 
 	if weatherInstance == nil {
 		weatherLock.Lock()
@@ -96,7 +48,7 @@ func (w *Weather) GetCurrentConditions() {
 	}
 	defer response.Body.Close()
 
-	var currentConditions CurrentConditions
+	var currentConditions types.CurrentConditions
 
 	err = json.NewDecoder(response.Body).Decode(&currentConditions)
 	if err != nil {
@@ -116,7 +68,7 @@ func (w *Weather) Get5DayForecast() {
 	}
 	defer response.Body.Close()
 
-	var fiveDayForecast FiveDayForecast
+	var fiveDayForecast types.FiveDayForecast
 
 	err = json.NewDecoder(response.Body).Decode(&fiveDayForecast)
 	if err != nil {
