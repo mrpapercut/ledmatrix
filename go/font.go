@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -21,14 +21,14 @@ type Font struct {
 func getFontFromJson(filename string) (*Font, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		fmt.Println("Error opening config file:", err)
+		log.Println("Error opening config file:", err)
 		return nil, err
 	}
 	defer file.Close()
 
 	jsonData, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Println("Error reading config file:", err)
+		log.Println("Error reading config file:", err)
 		return nil, err
 	}
 
@@ -36,7 +36,7 @@ func getFontFromJson(filename string) (*Font, error) {
 
 	err = json.Unmarshal(jsonData, &font)
 	if err != nil {
-		fmt.Println("Error parsing config file:", err)
+		log.Println("Error parsing config file:", err)
 		return nil, err
 	}
 
@@ -67,13 +67,28 @@ func getMinimalNumbersFont() *Font {
 	return font
 }
 
+func getFontByName(name string) *Font {
+	fontfns := map[string]func() *Font{
+		"default":         getDefaultFont,
+		"smw":             getSMWFont,
+		"segmented":       getSegmentedDisplayFont,
+		"minimal-numbers": getMinimalNumbersFont,
+	}
+
+	if fontfn, ok := fontfns[name]; ok {
+		return fontfn()
+	} else {
+		log.Printf("Font not found: %s", name)
+		return getDefaultFont()
+	}
+}
+
 func (f *Font) ConvertTextToSpritesheet(text string, convertOptions ConvertOptions) *Spritesheet {
 	config := getConfig()
 
 	spritesheet := &Spritesheet{
 		Width:     0,
 		Height:    0,
-		NumSheets: 1,
 		FPS:       10,
 		Animation: []int{0},
 		Colors:    []int{0, config.Canvas.TextColor},
