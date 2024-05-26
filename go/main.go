@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 
@@ -10,6 +12,18 @@ import (
 )
 
 func main() {
+	// Setup logger
+	logfile, err := os.OpenFile("ledmatrix.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		log.Fatalf("Failed to open ledmatrix.log: %v", err)
+	}
+	defer logfile.Close()
+
+	logger := slog.New(slog.NewJSONHandler(logfile, nil))
+
+	slog.SetDefault(logger)
+
+	// Create canvas, config singletons
 	canvas := canvas.GetCanvasInstance()
 	config := config.GetConfig()
 
