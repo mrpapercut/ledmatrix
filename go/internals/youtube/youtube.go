@@ -162,7 +162,7 @@ func (y *Youtube) CheckVideoExistsInDb(videoId string) bool {
 }
 
 func (y *Youtube) getVideoDetails(videoId string) (types.YoutubeVideoDetails, error) {
-	datestringLayout := "2006-01-02T15:04:05-07:00"
+	datestringLayout := "2006-01-02T15:04:05Z"
 	url := fmt.Sprintf("%s%s&key=%s", y.videoDetailsUrlPrefix, videoId, y.config.Youtube.ApiKey)
 
 	videoDetails := types.YoutubeVideoDetails{}
