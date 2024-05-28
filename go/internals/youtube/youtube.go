@@ -113,8 +113,10 @@ func (y *Youtube) ParseVideos(channel string, videos []types.Entry) {
 
 		sql.InsertYoutubeVideo(youtubeVideo)
 
-		slog.Info("Inserting video. Title: %v, published: %v, duration: %v seconds\n",
-			video.Title, parsedPublishedTime.Format("2006-01-02 15:04:05"), youtubeVideo.Details.Duration)
+		slog.Info("Inserting video.",
+			"title", video.Title,
+			"published", parsedPublishedTime.Format("2006-01-02 15:04:05"),
+			"duration", youtubeVideo.Details.Duration)
 
 		var message string
 		if youtubeVideo.Details.IsUpcoming {
@@ -185,18 +187,20 @@ func (y *Youtube) getVideoDetails(videoId string) (types.YoutubeVideoDetails, er
 		return videoDetails, nil
 	}
 
-	videoDetails.IsLive = jsonVideoDetails.Items[0].Snippet.Live == "live"
-	videoDetails.IsUpcoming = jsonVideoDetails.Items[0].Snippet.Live == "upcoming"
+	detailsItem := jsonVideoDetails.Items[0]
 
-	if len(jsonVideoDetails.Items[0].LiveStreamingDetails.ScheduledStartTime) > 0 {
-		parsedScheduledTime, err := time.Parse(datestringLayout, jsonVideoDetails.Items[0].LiveStreamingDetails.ScheduledStartTime)
+	videoDetails.IsLive = detailsItem.Snippet.Live == "live"
+	videoDetails.IsUpcoming = detailsItem.Snippet.Live == "upcoming"
+
+	if len(detailsItem.LiveStreamingDetails.ScheduledStartTime) > 0 {
+		parsedScheduledTime, err := time.Parse(datestringLayout, detailsItem.LiveStreamingDetails.ScheduledStartTime)
 		if err != nil {
 			slog.Error("Error parsing scheduled date:", err)
 		}
 		videoDetails.UpcomingDate = parsedScheduledTime.Unix()
 	}
 
-	duration, err2 := utils.ParseDurationString(jsonVideoDetails.Items[0].Details.Duration)
+	duration, err2 := utils.ParseDurationString(detailsItem.Details.Duration)
 	if err2 != nil {
 		return videoDetails, err2
 	}
