@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -64,7 +64,7 @@ func (y *Youtube) GetVideos() {
 		feed, err := y.getRssFeed(channelId)
 
 		if err != nil {
-			log.Println("Error parsing RSS feed:", err)
+			slog.Warn("Error parsing RSS feed:", err)
 			continue
 		}
 
@@ -86,12 +86,12 @@ func (y *Youtube) ParseVideos(channel string, videos []types.Entry) {
 
 		parsedPublishedTime, err := time.Parse(datestringLayout, video.Published)
 		if err != nil {
-			log.Println("Error parsing published date:", err)
+			slog.Warn("Error parsing published date:", err)
 		}
 
 		videoDetails, err := y.getVideoDetails(video.VideoId)
 		if err != nil {
-			log.Println("Error parsing video details:", err)
+			slog.Warn("Error parsing video details:", err)
 		}
 
 		if videoDetails.Duration > 0 && videoDetails.Duration <= 60 {
@@ -113,7 +113,7 @@ func (y *Youtube) ParseVideos(channel string, videos []types.Entry) {
 
 		sql.InsertYoutubeVideo(youtubeVideo)
 
-		log.Printf("Inserting video. Title: %v, published: %v, duration: %v seconds\n",
+		slog.Info("Inserting video. Title: %v, published: %v, duration: %v seconds\n",
 			video.Title, parsedPublishedTime.Format("2006-01-02 15:04:05"), youtubeVideo.Details.Duration)
 
 		var message string
@@ -181,7 +181,7 @@ func (y *Youtube) getVideoDetails(videoId string) (types.YoutubeVideoDetails, er
 	}
 
 	if len(jsonVideoDetails.Items) < 1 {
-		log.Printf("No videodetails found for %v: %v\n", videoId, jsonVideoDetails)
+		slog.Warn("No videodetails found for %v: %v\n", videoId, jsonVideoDetails)
 		return videoDetails, nil
 	}
 
@@ -191,7 +191,7 @@ func (y *Youtube) getVideoDetails(videoId string) (types.YoutubeVideoDetails, er
 	if len(jsonVideoDetails.Items[0].LiveStreamingDetails.ScheduledStartTime) > 0 {
 		parsedScheduledTime, err := time.Parse(datestringLayout, jsonVideoDetails.Items[0].LiveStreamingDetails.ScheduledStartTime)
 		if err != nil {
-			log.Println("Error parsing scheduled date:", err)
+			slog.Error("Error parsing scheduled date:", err)
 		}
 		videoDetails.UpcomingDate = parsedScheduledTime.Unix()
 	}
