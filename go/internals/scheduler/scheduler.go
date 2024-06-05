@@ -16,7 +16,6 @@ import (
 type Scheduler struct {
 	ticker        *time.Ticker
 	ticks         int64
-	canvas        *canvas.Canvas
 	config        *config.Config
 	lastShownJob  string
 	lastShownTime int64
@@ -28,7 +27,7 @@ var (
 var schedulerLock = &sync.Mutex{}
 var schedulerInstance *Scheduler
 
-func GetSchedulerInstance(canvas *canvas.Canvas, config *config.Config) *Scheduler {
+func GetSchedulerInstance(config *config.Config) *Scheduler {
 	if schedulerInstance == nil {
 		schedulerLock.Lock()
 		defer schedulerLock.Unlock()
@@ -37,7 +36,6 @@ func GetSchedulerInstance(canvas *canvas.Canvas, config *config.Config) *Schedul
 			schedulerInstance = &Scheduler{
 				ticker:        time.NewTicker(1 * time.Minute),
 				ticks:         0,
-				canvas:        canvas,
 				config:        config,
 				lastShownJob:  "",
 				lastShownTime: 0,
@@ -65,7 +63,10 @@ func (s *Scheduler) Start() {
 func (s *Scheduler) Stop() {
 	cleanupOnce.Do(func() {
 		log.Println("\nCTRL+C signal received, cleaning up...")
-		s.canvas.Close()
+
+		canvas := canvas.GetCanvasInstance()
+		canvas.Close()
+
 		s.ticker.Stop()
 	})
 }

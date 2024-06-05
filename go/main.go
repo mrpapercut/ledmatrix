@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mrpapercut/ledmatrix/internals/canvas"
 	"github.com/mrpapercut/ledmatrix/internals/config"
 	"github.com/mrpapercut/ledmatrix/internals/scheduler"
 )
@@ -23,11 +22,9 @@ func main() {
 
 	slog.SetDefault(logger)
 
-	// Create canvas, config singletons
-	canvas := canvas.GetCanvasInstance()
 	config := config.GetConfig()
 
-	schedulerInstance := scheduler.GetSchedulerInstance(canvas, config)
+	schedulerInstance := scheduler.GetSchedulerInstance(config)
 	defer schedulerInstance.Stop()
 
 	// Prepare for cleanup
