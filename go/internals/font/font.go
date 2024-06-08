@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -85,16 +86,6 @@ func GetFontByName(name string) *Font {
 }
 
 func (f *Font) ConvertTextToSpritesheet(text string, convertOptions types.ConvertOptions) *spritesheet.Spritesheet {
-	config := config.GetConfig()
-
-	sheet := &spritesheet.Spritesheet{
-		Width:     0,
-		Height:    0,
-		FPS:       10,
-		Animation: []int{0},
-		Colors:    []int{0, config.Canvas.TextColor},
-	}
-
 	// Convert text to font-characters
 	characters := make([][]int, 0, len(text))
 	for _, char := range text {
@@ -130,15 +121,27 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions types.Conver
 		sheetsPixelData = append(sheetsPixelData, characterPixels)
 	}
 
-	// Convert character-sheets to single sheet
-	var singleSheetPixelData types.PixelData
+	return f.convertCharactersToSingleSpritesheets(convertOptions, sheetsPixelData)
+}
+
+func (f *Font) convertCharactersToSingleSpritesheets(convertOptions types.ConvertOptions, sheetsPixelData types.PixelData) *spritesheet.Spritesheet {
+	config := config.GetConfig()
+
+	sheet := &spritesheet.Spritesheet{
+		Width:     0,
+		Height:    0,
+		FPS:       10,
+		Animation: []int{0},
+		Colors:    []int{0, config.Canvas.TextColor},
+	}
 
 	if convertOptions.CharacterSpacing == 0 {
 		convertOptions.CharacterSpacing = 2
 	}
+
+	// Get max width & height of characters for alignment
 	maxWidth := 0
 	maxHeight := 0
-
 	for _, sheet := range sheetsPixelData {
 		width, height := utils.GetSheetWidthHeight(sheet)
 		if width > maxWidth {
@@ -151,7 +154,6 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions types.Conver
 
 	singleSheet := make([][]int, 0)
 	maxSheetWidth := 0
-
 	for y := 0; y < maxHeight; y++ {
 		combinedRow := make([]int, 0)
 
@@ -181,11 +183,82 @@ func (f *Font) ConvertTextToSpritesheet(text string, convertOptions types.Conver
 		singleSheet = append(singleSheet, combinedRow)
 	}
 
-	singleSheetPixelData = append(singleSheetPixelData, singleSheet)
-	sheet.PixelData = singleSheetPixelData
+	sheet.PixelData = types.PixelData{singleSheet}
 
 	sheet.Width = maxSheetWidth
 	sheet.Height = maxHeight
+
+	return sheet
+}
+
+func (f *Font) PrependLogoToTextSpritesheet(logo, textSheet *spritesheet.Spritesheet) *spritesheet.Spritesheet {
+	config := config.GetConfig()
+
+	sheet := &spritesheet.Spritesheet{
+		Width:     0,
+		Height:    0,
+		FPS:       10,
+		Animation: []int{0},
+		Colors:    []int{0, config.Canvas.TextColor},
+	}
+
+	// Add logo colors
+	sheet.Colors = append(sheet.Colors, logo.Colors...)
+	// Update color indexes
+	for i := 0; i < len(logo.PixelData[0]); i++ {
+		for j := 0; j < len(logo.PixelData[0][i]); j++ {
+			if logo.PixelData[0][i][j] == -1 {
+				logo.PixelData[0][i][j] = 1
+			}
+			logo.PixelData[0][i][j] += 2
+		}
+	}
+
+	// Create new sheet for pixeldata
+	singleSheet := make([][]int, 0)
+
+	logoIsLargest := logo.Height >= textSheet.Height
+	if !logoIsLargest {
+		// Increase the height of the logo to match the text
+		newRows := make([][]int, 0)
+		newRows = append(newRows, logo.PixelData[0]...)
+
+		halvedDifference := int(math.Floor(float64(textSheet.Height-logo.Height) / 2))
+
+		for i := 0; i < halvedDifference; i++ {
+			newRows = append(newRows, make([]int, logo.Width+2))
+		}
+
+		logo.Height = len(newRows)
+		logo.PixelData = types.PixelData{newRows}
+	}
+
+	maxSheetWidth := 0
+	for i := 0; i < logo.Height; i++ {
+		combinedRow := make([]int, 0)
+		combinedRow = append(combinedRow, logo.PixelData[0][i]...)
+
+		if len(logo.PixelData[0][i]) < logo.Width {
+			// Make sure logo draws up to max width
+			combinedRow = append(combinedRow, make([]int, logo.Width-len(logo.PixelData[0][i]))...)
+		}
+
+		if i < len(textSheet.PixelData[0]) {
+			combinedRow = append(combinedRow, make([]int, 3)...) // Spacing between logo and text
+			combinedRow = append(combinedRow, textSheet.PixelData[0][i]...)
+		}
+
+		singleSheet = append(singleSheet, combinedRow)
+
+		if len(combinedRow) > maxSheetWidth {
+			maxSheetWidth = len(combinedRow)
+		}
+	}
+
+	sheet.Width = maxSheetWidth
+	sheet.Height = logo.Height
+
+	sheet.PixelData = types.PixelData{singleSheet}
 
 	return sheet
 }

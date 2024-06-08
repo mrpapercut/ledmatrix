@@ -8,7 +8,9 @@ import (
 	"github.com/mrpapercut/ledmatrix/internals/canvas"
 	"github.com/mrpapercut/ledmatrix/internals/config"
 	"github.com/mrpapercut/ledmatrix/internals/jobs"
+	"github.com/mrpapercut/ledmatrix/internals/spritesheet"
 	"github.com/mrpapercut/ledmatrix/internals/sqlite"
+	"github.com/mrpapercut/ledmatrix/internals/types"
 	"github.com/mrpapercut/ledmatrix/internals/utils"
 	"github.com/mrpapercut/ledmatrix/internals/youtube"
 )
@@ -56,8 +58,16 @@ func (s *Scheduler) Start() {
 	}()
 
 	jobs := jobs.Jobs{}
-	jobs.DrawAnimationByFilename("kirbyDance01")
-	jobs.DrawClock()
+	// jobs.DrawAnimationByFilename("kirbyDance01")
+	// jobs.DrawClock()
+
+	logo, err := spritesheet.GetSpritesheetFromJson("./sprites/youtubeLogo.json")
+	if err != nil {
+		log.Fatalf("Error creating spritesheet: %v", err)
+	}
+	jobs.DrawFeedMessage(types.FeedMessage{
+		Message: "Hello, world!",
+	}, logo)
 }
 
 func (s *Scheduler) Stop() {

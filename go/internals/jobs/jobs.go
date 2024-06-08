@@ -109,10 +109,14 @@ func (j *Jobs) GetLowPriorityMessage() (bool, types.FeedMessage) {
 	return true, message
 }
 
-func (j *Jobs) DrawFeedMessage(message types.FeedMessage) {
+func (j *Jobs) DrawFeedMessage(message types.FeedMessage, logo ...*spritesheet.Spritesheet) {
 	f := font.GetFontByName("default")
 	convertOptions := types.ConvertOptions{}
 	messageSprite := f.ConvertTextToSpritesheet(message.Message, convertOptions)
+
+	if len(logo) > 0 {
+		messageSprite = f.PrependLogoToTextSpritesheet(logo[0], messageSprite)
+	}
 
 	drawOptions := types.DrawOptions{
 		SpriteType:  types.TextSprite,
@@ -121,5 +125,6 @@ func (j *Jobs) DrawFeedMessage(message types.FeedMessage) {
 		ScrollSpeed: 3,
 		Direction:   types.Left,
 	}
+
 	messageSprite.Draw(drawOptions)
 }

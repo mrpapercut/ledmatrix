@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/mrpapercut/ledmatrix/internals/canvas"
 	"github.com/mrpapercut/ledmatrix/internals/config"
 	"github.com/mrpapercut/ledmatrix/internals/scheduler"
 )
@@ -23,6 +24,9 @@ func main() {
 	slog.SetDefault(logger)
 
 	config := config.GetConfig()
+
+	// Specify canvas by initializing instance
+	canvas.GetCanvasInstance()
 
 	schedulerInstance := scheduler.GetSchedulerInstance(config)
 	defer schedulerInstance.Stop()
