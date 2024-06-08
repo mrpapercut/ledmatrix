@@ -10,7 +10,6 @@ import (
 	"github.com/mrpapercut/ledmatrix/internals/jobs"
 	"github.com/mrpapercut/ledmatrix/internals/spritesheet"
 	"github.com/mrpapercut/ledmatrix/internals/sqlite"
-	"github.com/mrpapercut/ledmatrix/internals/types"
 	"github.com/mrpapercut/ledmatrix/internals/utils"
 	"github.com/mrpapercut/ledmatrix/internals/youtube"
 )
@@ -57,17 +56,17 @@ func (s *Scheduler) Start() {
 		}
 	}()
 
-	jobs := jobs.Jobs{}
-	// jobs.DrawAnimationByFilename("kirbyDance01")
-	// jobs.DrawClock()
+	// jobs := jobs.Jobs{}
+	// // jobs.DrawAnimationByFilename("kirbyDance01")
+	// // jobs.DrawClock()
 
-	logo, err := spritesheet.GetSpritesheetFromJson("./sprites/youtubeLogo.json")
-	if err != nil {
-		log.Fatalf("Error creating spritesheet: %v", err)
-	}
-	jobs.DrawFeedMessage(types.FeedMessage{
-		Message: "Hello, world!",
-	}, logo)
+	// logo, err := spritesheet.GetSpritesheetFromJson("./sprites/youtubeLogo.json")
+	// if err != nil {
+	// 	log.Fatalf("Error creating spritesheet: %v", err)
+	// }
+	// jobs.DrawFeedMessage(types.FeedMessage{
+	// 	Message: "Hello, world!",
+	// }, logo)
 }
 
 func (s *Scheduler) Stop() {
@@ -93,7 +92,12 @@ func (s *Scheduler) runJobs() {
 	if messageReady && s.lastShownJob != messageToDraw.Type {
 		log.Printf("Drawing high priority message of type %s\n", messageToDraw.Type)
 
-		jobs.DrawFeedMessage(messageToDraw)
+		if messageToDraw.Type == "youtubeVideo" {
+			ytlogo, _ := spritesheet.GetSpritesheetFromJson("./sprites/youtubeLogo.json")
+			jobs.DrawFeedMessage(messageToDraw, ytlogo)
+		} else {
+			jobs.DrawFeedMessage(messageToDraw)
+		}
 
 		sqlite := sqlite.GetSQLiteInstance()
 		sqlite.LowerPriorityAndDisplayTimes(messageToDraw)
