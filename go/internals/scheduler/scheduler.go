@@ -16,12 +16,12 @@ import (
 )
 
 type Scheduler struct {
-	ticker             *time.Ticker
-	ticks              int64
-	config             *config.Config
-	lastShownJob       string
-	lastShownTime      int64
-	lastShowJobChannel chan string
+	ticker              *time.Ticker
+	ticks               int64
+	config              *config.Config
+	lastShownJob        string
+	lastShownTime       int64
+	lastShownJobChannel chan string
 }
 
 var (
@@ -37,12 +37,12 @@ func GetSchedulerInstance(config *config.Config) *Scheduler {
 
 		if schedulerInstance == nil {
 			schedulerInstance = &Scheduler{
-				ticker:             time.NewTicker(1 * time.Minute),
-				ticks:              0,
-				config:             config,
-				lastShownJob:       "nothing",
-				lastShownTime:      0,
-				lastShowJobChannel: make(chan string),
+				ticker:              time.NewTicker(1 * time.Minute),
+				ticks:               0,
+				config:              config,
+				lastShownJob:        "nothing",
+				lastShownTime:       0,
+				lastShownJobChannel: make(chan string),
 			}
 		}
 	}
@@ -60,7 +60,7 @@ func (s *Scheduler) Start() {
 	}()
 
 	go func() {
-		for lastShownJob := range s.lastShowJobChannel {
+		for lastShownJob := range s.lastShownJobChannel {
 			s.updateLastShown(lastShownJob)
 		}
 	}()
@@ -94,7 +94,7 @@ func (s *Scheduler) runJobs() {
 		sqlite := sqlite.GetSQLiteInstance()
 		sqlite.LowerPriorityAndDisplayTimes(messageToDraw)
 
-		s.lastShowJobChannel <- messageToDraw.Type
+		s.lastShownJobChannel <- messageToDraw.Type
 	} else if s.ticks > 0 && s.ticks%10 == 0 { // Every 10 minutes
 		messageReady, messageToDraw := jobs.GetLowPriorityMessage()
 		if messageReady && s.lastShownJob != messageToDraw.Type {
@@ -105,16 +105,16 @@ func (s *Scheduler) runJobs() {
 			sqlite := sqlite.GetSQLiteInstance()
 			sqlite.LowerPriorityAndDisplayTimes(messageToDraw)
 
-			s.lastShowJobChannel <- messageToDraw.Type
+			s.lastShownJobChannel <- messageToDraw.Type
 		} else {
 			log.Println("Drawing idle screen")
 
 			jobs.DrawIdleScreen()
 
-			s.lastShowJobChannel <- "idle"
+			s.lastShownJobChannel <- "idle"
 		}
 	} else {
-		s.lastShowJobChannel <- "nothing" // great hack
+		s.lastShownJobChannel <- "nothing" // great hack
 	}
 
 	// Background jobs (don't use display)
