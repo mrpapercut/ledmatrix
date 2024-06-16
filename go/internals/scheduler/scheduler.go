@@ -10,16 +10,18 @@ import (
 	"github.com/mrpapercut/ledmatrix/internals/jobs"
 	"github.com/mrpapercut/ledmatrix/internals/spritesheet"
 	"github.com/mrpapercut/ledmatrix/internals/sqlite"
+	"github.com/mrpapercut/ledmatrix/internals/types"
 	"github.com/mrpapercut/ledmatrix/internals/utils"
 	"github.com/mrpapercut/ledmatrix/internals/youtube"
 )
 
 type Scheduler struct {
-	ticker        *time.Ticker
-	ticks         int64
-	config        *config.Config
-	lastShownJob  string
-	lastShownTime int64
+	ticker             *time.Ticker
+	ticks              int64
+	config             *config.Config
+	lastShownJob       string
+	lastShownTime      int64
+	lastShowJobChannel chan string
 }
 
 var (
@@ -35,11 +37,12 @@ func GetSchedulerInstance(config *config.Config) *Scheduler {
 
 		if schedulerInstance == nil {
 			schedulerInstance = &Scheduler{
-				ticker:        time.NewTicker(1 * time.Minute),
-				ticks:         0,
-				config:        config,
-				lastShownJob:  "",
-				lastShownTime: 0,
+				ticker:             time.NewTicker(1 * time.Minute),
+				ticks:              0,
+				config:             config,
+				lastShownJob:       "nothing",
+				lastShownTime:      0,
+				lastShowJobChannel: make(chan string),
 			}
 		}
 	}
@@ -56,17 +59,11 @@ func (s *Scheduler) Start() {
 		}
 	}()
 
-	// jobs := jobs.Jobs{}
-	// // jobs.DrawAnimationByFilename("kirbyDance01")
-	// // jobs.DrawClock()
-
-	// logo, err := spritesheet.GetSpritesheetFromJson("./sprites/youtubeLogo.json")
-	// if err != nil {
-	// 	log.Fatalf("Error creating spritesheet: %v", err)
-	// }
-	// jobs.DrawFeedMessage(types.FeedMessage{
-	// 	Message: "Hello, world!",
-	// }, logo)
+	go func() {
+		for lastShownJob := range s.lastShowJobChannel {
+			s.updateLastShown(lastShownJob)
+		}
+	}()
 }
 
 func (s *Scheduler) Stop() {
@@ -92,40 +89,32 @@ func (s *Scheduler) runJobs() {
 	if messageReady && s.lastShownJob != messageToDraw.Type {
 		log.Printf("Drawing high priority message of type %s\n", messageToDraw.Type)
 
-		if messageToDraw.Type == "youtubeVideo" {
-			ytlogo, _ := spritesheet.GetSpritesheetFromJson("./sprites/youtubeLogo.json")
-			jobs.DrawFeedMessage(messageToDraw, ytlogo)
-		} else {
-			jobs.DrawFeedMessage(messageToDraw)
-		}
+		s.drawMessage(messageToDraw)
 
 		sqlite := sqlite.GetSQLiteInstance()
 		sqlite.LowerPriorityAndDisplayTimes(messageToDraw)
 
-		s.updateLastShown(messageToDraw.Type)
-	} else {
-		// Every 10 minutes
-		if s.ticks > 0 && s.ticks%10 == 0 {
-			messageReady, messageToDraw := jobs.GetLowPriorityMessage()
-			if messageReady && s.lastShownJob != messageToDraw.Type {
-				log.Printf("Drawing low priority message of type %s\n", messageToDraw.Type)
+		s.lastShowJobChannel <- messageToDraw.Type
+	} else if s.ticks > 0 && s.ticks%10 == 0 { // Every 10 minutes
+		messageReady, messageToDraw := jobs.GetLowPriorityMessage()
+		if messageReady && s.lastShownJob != messageToDraw.Type {
+			log.Printf("Drawing low priority message of type %s\n", messageToDraw.Type)
 
-				jobs.DrawFeedMessage(messageToDraw)
+			s.drawMessage(messageToDraw)
 
-				sqlite := sqlite.GetSQLiteInstance()
-				sqlite.LowerPriorityAndDisplayTimes(messageToDraw)
+			sqlite := sqlite.GetSQLiteInstance()
+			sqlite.LowerPriorityAndDisplayTimes(messageToDraw)
 
-				s.updateLastShown(messageToDraw.Type)
-			} else {
-				log.Println("Drawing idle screen")
+			s.lastShowJobChannel <- messageToDraw.Type
+		} else {
+			log.Println("Drawing idle screen")
 
-				jobs.DrawIdleScreen()
+			jobs.DrawIdleScreen()
 
-				s.updateLastShown("idle")
-			}
+			s.lastShowJobChannel <- "idle"
 		}
-
-		s.updateLastShown("nothing") // great hack
+	} else {
+		s.lastShowJobChannel <- "nothing" // great hack
 	}
 
 	// Background jobs (don't use display)
@@ -145,6 +134,17 @@ func (s *Scheduler) runJobs() {
 		s.ticks = 0
 	} else {
 		s.ticks = s.ticks + 1
+	}
+}
+
+func (s *Scheduler) drawMessage(message types.FeedMessage) {
+	jobs := jobs.Jobs{}
+
+	if message.Type == "youtubeVideo" {
+		ytlogo, _ := spritesheet.GetSpritesheetFromJson("./sprites/youtubeLogo.json")
+		jobs.DrawFeedMessage(message, ytlogo)
+	} else {
+		jobs.DrawFeedMessage(message)
 	}
 }
 
