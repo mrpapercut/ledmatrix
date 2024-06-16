@@ -20,18 +20,24 @@ func main() {
 	defer logfile.Close()
 
 	logger := slog.New(slog.NewJSONHandler(logfile, nil))
-
 	slog.SetDefault(logger)
 
 	config := config.GetConfig()
 
 	// Specify canvas by initializing instance
-	canvas.GetCanvasInstance()
+	switch config.Canvas.Type {
+	case "html":
+		canvas.GetCanvasInstance(&canvas.HTMLCanvas{})
 
+	default:
+		canvas.GetCanvasInstance()
+	}
+
+	// Initialize scheduler
 	schedulerInstance := scheduler.GetSchedulerInstance(config)
 	defer schedulerInstance.Stop()
 
-	// Prepare for cleanup
+	// Cleanup on interrupt
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt)
 

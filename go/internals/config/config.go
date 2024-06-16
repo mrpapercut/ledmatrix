@@ -18,10 +18,11 @@ type Config struct {
 		Filename  string `json:"filename"`
 	} `json:"log"`
 	Canvas struct {
-		ScreenWidth  int `json:"screen_width"`
-		ScreenHeight int `json:"screen_height"`
-		Brightness   int `json:"brightness"`
-		TextColor    int `json:"text_color"`
+		Type         string `json:"type"`
+		ScreenWidth  int    `json:"screen_width"`
+		ScreenHeight int    `json:"screen_height"`
+		Brightness   int    `json:"brightness"`
+		TextColor    int    `json:"text_color"`
 	} `json:"canvas"`
 	Database struct {
 		Filename string `json:"filename"`
