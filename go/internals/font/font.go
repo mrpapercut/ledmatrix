@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"log"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -217,32 +216,32 @@ func (f *Font) PrependLogoToTextSpritesheet(logo, textSheet *spritesheet.Sprites
 	// Create new sheet for pixeldata
 	singleSheet := make([][]int, 0)
 
-	logoIsLargest := logo.Height >= textSheet.Height
-	if !logoIsLargest {
-		// Increase the height of the logo to match the text
-		newRows := make([][]int, 0)
-		newRows = append(newRows, logo.PixelData[0]...)
-
-		halvedDifference := int(math.Floor(float64(textSheet.Height-logo.Height) / 2))
-
-		for i := 0; i < halvedDifference; i++ {
-			newRows = append(newRows, make([]int, logo.Width+2))
-		}
-
-		logo.Height = len(newRows)
-		logo.PixelData = types.PixelData{newRows}
+	var fullHeight int
+	if logo.Height >= textSheet.Height {
+		fullHeight = logo.Height
+	} else {
+		fullHeight = textSheet.Height
 	}
 
 	maxSheetWidth := 0
-	for i := 0; i < logo.Height; i++ {
+	for i := 0; i < fullHeight; i++ {
 		combinedRow := make([]int, 0)
-		combinedRow = append(combinedRow, logo.PixelData[0][i]...)
 
-		if len(logo.PixelData[0][i]) < logo.Width {
-			// Make sure logo draws up to max width
-			combinedRow = append(combinedRow, make([]int, logo.Width-len(logo.PixelData[0][i]))...)
+		// Add the row of the logo first
+		// If logo has no row, prepend by the max width of the logo
+		if i < len(logo.PixelData[0]) {
+			combinedRow = append(combinedRow, logo.PixelData[0][i]...)
+
+			// If the current row of the logo is less that max width of the logo,
+			// add empty values for padding
+			if len(logo.PixelData[0][i]) < logo.Width {
+				combinedRow = append(combinedRow, make([]int, logo.Width-len(logo.PixelData[0][i]))...)
+			}
+		} else {
+			combinedRow = append(combinedRow, make([]int, logo.Width)...)
 		}
 
+		// Add the row of the textsheet
 		if i < len(textSheet.PixelData[0]) {
 			combinedRow = append(combinedRow, make([]int, 3)...) // Spacing between logo and text
 			combinedRow = append(combinedRow, textSheet.PixelData[0][i]...)
@@ -256,7 +255,7 @@ func (f *Font) PrependLogoToTextSpritesheet(logo, textSheet *spritesheet.Sprites
 	}
 
 	sheet.Width = maxSheetWidth
-	sheet.Height = logo.Height
+	sheet.Height = fullHeight
 
 	sheet.PixelData = types.PixelData{singleSheet}
 
