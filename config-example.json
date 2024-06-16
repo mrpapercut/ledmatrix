@@ -6,6 +6,7 @@
         "filename": "./feeder.log"
     },
     "canvas": {
+        "type": "led",
         "screen_width": 64,
         "screen_height": 32,
         "brightness": 30,
